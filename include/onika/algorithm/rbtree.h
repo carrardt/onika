@@ -26,7 +26,7 @@ struct rbtree_intvec_traits
 	{
 	}
 
-	static inline void getRight(const Container& tree, PointerType node)
+	static inline void setRight(const Container& tree, PointerType node)
 	{
 	}
 };
