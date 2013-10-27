@@ -1,5 +1,5 @@
 INCLUDE_DIR=./include
-INCLUDE_SUBDIRS=. codec container quantize mesh debug compress
+INCLUDE_SUBDIRS=. algorithm codec container quantize mesh debug compress
 HEADERS=$(wildcard $(patsubst %,$(INCLUDE_DIR)/onika/%/*.h,$(INCLUDE_SUBDIRS)) )
 TESTS=$(patsubst $(INCLUDE_DIR)/%.h,bin/%_TEST,$(HEADERS))
 #EXE=bin/meshcompress
