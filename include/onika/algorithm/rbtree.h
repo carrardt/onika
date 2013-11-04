@@ -70,8 +70,9 @@ struct TupleVectorBTree
 };
 
 template<class _ContainerType>
-struct TupleVectorPTree : public TupleVectorTree<_ContainerType>
+struct TupleVectorPTree : public TupleVectorBTree<_ContainerType>
 {
+	typedef size_t NodePtr; // position of node description in container
 	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type CountType;
 	inline CountType getCount(NodePtr i) { return std::get<3>(data[i]) ; }
 	inline void setCount(NodePtr i, CountType x) { std::get<3>(data[i]) = x; }
@@ -165,13 +166,13 @@ struct _PNodeRef : public _NodeRef<RbTree>
 };
 #endif
 
-template<class BTreeBase, class _BTreeNodeRef=_NodeRef<BTree> class _ValueCompare>
+template<class BTreeBase, template class _BTreeNodeRef=_NodeRef, class _ValueCompare>
 struct BTree : public BTreeBase
 {
 	typedef _ValueCompare ValueCompare;
 	typedef typename BTreeBase::NodePtr NodePtr;
 	typedef typename BTreeBase::ValueType ValueType;
-	typedef _NodeRef<BTree> NodeRef;
+	typedef _BTreeNodeRef<BTree> NodeRef;
 	static constexpr NodePtr NullPtr = BTreeBase::NullPtr;
 
 	inline BTree( const ValueCompare& comp = ValueCompare() ) : compare(comp) {}
