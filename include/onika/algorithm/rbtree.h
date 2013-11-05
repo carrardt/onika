@@ -21,15 +21,15 @@ struct TupleVectorBTree
 
 	static constexpr NodePtr NullPtr = (static_cast<NodePtr>(0) - 1) >> 1;
 
-	inline TupleVectorBTree() : root(NullPtr), freelist(NullPtr) {}
+	inline TupleVectorBTree() : freelist(NullPtr) {}
 
 	inline ValueType    getValue(NodePtr i) { return std::get<0>(data[i]) ; }
 	inline LeftPtrType  getLeft (NodePtr i) { return std::get<1>(data[i]) ; }
 	inline RightPtrType getRight(NodePtr i) { return std::get<2>(data[i]) ; }
 
 	inline void setValue(NodePtr i, ValueType x)    { std::get<0>(data[i]) = x; }
-	inline void setLeft (NodePtr i, LeftPtrType x)  { std::get<1>(data[i]) = x; }
-	inline void setRight(NodePtr i, RightPtrType x) { std::get<2>(data[i]) = x; }
+	inline void setLeft (NodePtr i, NodePtr x)  { std::get<1>(data[i]) = x; }
+	inline void setRight(NodePtr i, NodePtr x) { std::get<2>(data[i]) = x; }
 
 	// returns new freeNoseList
 	inline NodePtr addNode()
@@ -64,9 +64,7 @@ struct TupleVectorBTree
 	}
 
 	ContainerType data;
-	NodePtr root;
 	NodePtr freelist;
-
 };
 
 template<class _ContainerType>
@@ -74,12 +72,12 @@ struct TupleVectorPTree : public TupleVectorBTree<_ContainerType>
 {
 	typedef size_t NodePtr; // position of node description in container
 	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type CountType;
-	inline CountType getCount(NodePtr i) { return std::get<3>(data[i]) ; }
-	inline void setCount(NodePtr i, CountType x) { std::get<3>(data[i]) = x; }
+	inline CountType getCount(NodePtr i) { return std::get<3>(this->data[i]) ; }
+	inline void setCount(NodePtr i, CountType x) { std::get<3>(this->data[i]) = x; }
 };
 
 template<class Tree>
-struct _NodeRef<Tree>
+struct NodeRefT
 {
 	typedef typename Tree::NodePtr NodePtr;
 	typedef typename Tree::ValueType ValueType;
@@ -88,18 +86,18 @@ struct _NodeRef<Tree>
 	NodePtr grandparent, parent, self;
 	Tree& tree;
 
-	inline _NodeRef(Tree& t, NodePtr s, NodePtr p=NullPtr, NodePtr gp=NullPtr) : tree(t), self(s), parent(p), grandparent(gp) {}
-	inline _NodeRef(Tree& t) : tree(t), self( tree.addNode() ), parent(NullPtr), grandparent(NullPtr) {}
+	inline NodeRefT(Tree& t, NodePtr s, NodePtr p=NullPtr, NodePtr gp=NullPtr) : tree(t), self(s), parent(p), grandparent(gp) {}
+	inline NodeRefT(Tree& t) : tree(t), self( tree.addNode() ), parent(NullPtr), grandparent(NullPtr) {}
 
-	inline _NodeRef  getLeft () const { return _NodeRef( tree , tree.getLeft(self), self, parent ); }
-	inline _NodeRef  getRight() const { return _NodeRef( tree , tree.getRight(self), self, parent ); }
+	inline NodeRefT  getLeft () const { return NodeRefT( tree , tree.getLeft(self), self, parent ); }
+	inline NodeRefT  getRight() const { return NodeRefT( tree , tree.getRight(self), self, parent ); }
 	inline ValueType getValue() const { return tree.getValue(self); }
 
-	inline void setLeft (_NodeRef x) 	 { tree.setLeft(self,x.self); }
-	inline void setRight(_NodeRef x) 	 { tree.setRight(self,x.self); }
+	inline void setLeft (NodeRefT x) 	 { tree.setLeft(self,x.self); }
+	inline void setRight(NodeRefT x) 	 { tree.setRight(self,x.self); }
 	inline void setValue(const ValueType& x) { tree.setValue(self,x); }
 
-	inline _NodeRef insert(const ValueType& x)
+	inline NodeRefT insert(const ValueType& x)
 	{
 		if( self == NullPtr )
 		{
@@ -166,7 +164,7 @@ struct _PNodeRef : public _NodeRef<RbTree>
 };
 #endif
 
-template<class BTreeBase, template class _BTreeNodeRef=_NodeRef, class _ValueCompare>
+template<class BTreeBase, class _ValueCompare, template<typename> class _BTreeNodeRef=NodeRefT>
 struct BTree : public BTreeBase
 {
 	typedef _ValueCompare ValueCompare;
@@ -175,7 +173,7 @@ struct BTree : public BTreeBase
 	typedef _BTreeNodeRef<BTree> NodeRef;
 	static constexpr NodePtr NullPtr = BTreeBase::NullPtr;
 
-	inline BTree( const ValueCompare& comp = ValueCompare() ) : compare(comp) {}
+	inline BTree( const ValueCompare& comp = ValueCompare() ) : root(NullPtr), compare(comp) {}
 
 	inline NodeRef getRoot()
 	{
@@ -191,6 +189,7 @@ struct BTree : public BTreeBase
 		setRoot( getRoot().insert(x) );	
 	}
 
+	NodePtr root;
 	ValueCompare compare;
 };
 
@@ -209,14 +208,14 @@ struct BTree : public BTreeBase
 #include <vector>
 #include <functional>   // std::less
 
-typedef onika::algorithm::TupleVectorBTree< std::vector< std::tuple<double,int,int> > > SimpleTreeBase;
+typedef onika::algorithm::TupleVectorBTree< std::vector< std::tuple<double,size_t,size_t> > > SimpleTreeBase;
 typedef onika::algorithm::BTree< SimpleTreeBase, std::less<double> > SimpleTree;
 typedef typename SimpleTree::NodeRef NodeRef;
 
 void print(NodeRef node, int indent=0)
 {
 	for(int i=0;i<indent;i++) std::cout<<' ';
-	if( node == NodeRef::NullPtr ) 
+	if( node.self == NodeRef::NullPtr ) 
 	{
 		std::cout<<"null\n";
 		return;
