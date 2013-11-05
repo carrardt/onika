@@ -19,6 +19,7 @@ struct TupleVectorBTree
 	typedef typename std::tuple_element<1,Node>::type LeftPtrType;
 	typedef typename std::tuple_element<2,Node>::type RightPtrType;
 
+	static constexpr unsigned int TupleSize = 3;
 	static constexpr NodePtr NullPtr = (static_cast<NodePtr>(0) - 1) >> 1;
 
 	inline TupleVectorBTree() : freelist(NullPtr) {}
@@ -72,6 +73,8 @@ struct TupleVectorPTree : public TupleVectorBTree<_ContainerType>
 {
 	typedef size_t NodePtr; // position of node description in container
 	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type CountType;
+	static constexpr unsigned int TupleSize = 4;
+
 	inline CountType getCount(NodePtr i) { return std::get<3>(this->data[i]) ; }
 	inline void setCount(NodePtr i, CountType x) { std::get<3>(this->data[i]) = x; }
 };
@@ -86,11 +89,11 @@ struct NodeRefT
 	NodePtr grandparent, parent, self;
 	Tree& tree;
 
-	inline NodeRefT(Tree& t, NodePtr s, NodePtr p=NullPtr, NodePtr gp=NullPtr) : tree(t), self(s), parent(p), grandparent(gp) {}
+	inline NodeRefT(Tree& t, NodePtr s, NodePtr p, NodePtr gp) : tree(t), self(s), parent(p), grandparent(gp) {}
 	inline NodeRefT(Tree& t) : tree(t), self( tree.addNode() ), parent(NullPtr), grandparent(NullPtr) {}
 
-	inline NodeRefT  getLeft () const { return NodeRefT( tree , tree.getLeft(self), self, parent ); }
-	inline NodeRefT  getRight() const { return NodeRefT( tree , tree.getRight(self), self, parent ); }
+	inline NodeRefT getLeft () const { return NodeRefT( tree , tree.getLeft(self), self, parent ); }
+	inline NodeRefT getRight() const { return NodeRefT( tree , tree.getRight(self), self, parent ); }
 	inline ValueType getValue() const { return tree.getValue(self); }
 
 	inline void setLeft (NodeRefT x) 	 { tree.setLeft(self,x.self); }
@@ -99,58 +102,13 @@ struct NodeRefT
 
 	inline NodeRefT insert(const ValueType& x)
 	{
-		if( self == NullPtr )
+		if( this->self == NullPtr )
 		{
-			self = tree.addNode();
-			setValue( x );
-		}
-		else if( tree.compare( x, getValue() ) )
-		{
-			setLeft( getLeft().insert(x) );
-		}
-		else
-		{
-			setRight( getRight().insert(x) );
-		}
-		return *this;
-	}
-};
-
-#if 0
-// counter stored at each node is equal to the total number of nodes of it's left child's subtree 
-template<class RbTree, class count_traits >
-struct _PNodeRef : public _NodeRef<RbTree>
-{
-	typedef typename RbTree::ValueType ValueType;
-	typedef typename pos_traits::value_type CountType;
-	inline CountType getLeftCount() { return count_traits::get(this->tree.data,this->self); }
-	inline void setLeftCount(CountType n) { count_traits::set(this->tree.data,this->self,n); }
-
-	inline _PNodeRef(RbTree& t, NodePtr s, _PNodeRef p, _PNodeRef gp ) : _NodeRef<RbTree>(t,s,p.self,gp.self)
-	{
-		index = getLeftCount();
-		if( this->parent != NullPtr )
-		{
-			if(  )
-			index += 1 + count_traits::get(this->tree.data,this->parent);
-		}
-	}
-	inline _PNodeRef(RbTree& t) : _NodeRef<RbTree>(t), index(0) { setLeftCount(0); }
-
-	inline _PNodeRef  getLeft () const { return _NodeRef( tree , tree.getLeft(self), self, parent ); }
-	inline _PNodeRef  getRight() const { return _NodeRef( tree , tree.getRight(self), self, parent ); }
-
-	inline _PNodeRef insert(const ValueType& x)
-	{
-		if( self == NullPtr )
-		{
-			this->self = tree.addNode();
+			this->self = this->tree.addNode();
 			this->setValue( x );
-			this->setLeftCount( 0 );
 		}
-		else if( tree.compare( x, getValue() ) )
+		else if( this->tree.compare( x, this->getValue() ) )
 		{
-			this->setLeftCount( this->getLeftCount() + 1 );
 			this->setLeft( this->getLeft().insert(x) );
 		}
 		else
@@ -159,10 +117,80 @@ struct _PNodeRef : public _NodeRef<RbTree>
 		}
 		return *this;
 	}
-	
-	CountType index;
 };
-#endif
+
+template<class Tree>
+struct PNodeRefT : public NodeRefT<Tree>
+{
+	typedef typename Tree::NodePtr NodePtr;
+	typedef typename Tree::ValueType ValueType;
+	typedef typename Tree::CountType CountType;
+	static constexpr NodePtr NullPtr = Tree::NullPtr;
+
+	inline PNodeRefT(Tree& t, NodePtr s, NodePtr p, NodePtr gp, CountType tc=0)
+		: NodeRefT<Tree>(t,s,p,gp)
+		, traversalCount(tc)
+		{}
+
+	inline PNodeRefT(Tree& t, CountType tc=0)
+		: NodeRefT<Tree>(t,this->tree.addNode(),NullPtr,NullPtr)
+		, traversalCount(tc)
+		{}
+
+	inline PNodeRefT getLeft () const
+	{
+		return PNodeRefT( this->tree , this->tree.getLeft(this->self), this->self, this->parent, this->traversalCount );
+	}
+
+	inline PNodeRefT getRight() const
+	{
+		return PNodeRefT( this->tree , this->tree.getRight(this->self), this->self, this->parent, this->getPosition()+1 );
+	}
+
+	inline CountType getCount() const
+	{
+		return this->tree.getCount(this->self);
+	}
+
+	inline void setCount(CountType n) const
+	{
+		return this->tree.setCount(this->self, n);
+	}
+
+	inline CountType getPosition() const
+	{
+		return traversalCount + getCount();
+	}
+
+	inline void setLeft (PNodeRefT x) 	 { this->tree.setLeft(this->self,x.self); }
+	inline void setRight(PNodeRefT x) 	 { this->tree.setRight(this->self,x.self); }
+	inline void setValue(const ValueType& x) { this->tree.setValue(this->self,x); }
+
+	// returns sub-tree size increase
+	inline PNodeRefT insert(const ValueType& x)
+	{
+		if( this->self == NullPtr )
+		{
+			this->self = this->tree.addNode();
+			this->setValue( x );
+			this->setCount( 0 );
+		}
+		else if( this->tree.compare( x, this->getValue() ) )
+		{
+			this->setLeft( this->getLeft().insert(x) );
+			// we have inserted one node somwhere inside the left sub-tree, thus left count inrease by 1
+			this->setCount( this->getCount() + 1 );
+		}
+		else
+		{
+			this->setRight( this->getRight().insert(x) );
+		}
+		return *this;
+	}
+
+	// count of all nodes on the left of the left-most child of this node's subtree
+	CountType traversalCount; 	
+};
 
 template<class BTreeBase, class _ValueCompare, template<typename> class _BTreeNodeRef=NodeRefT>
 struct BTree : public BTreeBase
@@ -177,7 +205,7 @@ struct BTree : public BTreeBase
 
 	inline NodeRef getRoot()
 	{
-		return NodeRef(*this,this->root);
+		return NodeRef(*this,this->root,NullPtr,NullPtr);
 	}
 	inline void setRoot(NodeRef n)
 	{
@@ -208,54 +236,83 @@ struct BTree : public BTreeBase
 #include <vector>
 #include <functional>   // std::less
 
+// simple binary tree
 typedef onika::algorithm::TupleVectorBTree< std::vector< std::tuple<double,size_t,size_t> > > SimpleTreeBase;
 typedef onika::algorithm::BTree< SimpleTreeBase, std::less<double> > SimpleTree;
 typedef typename SimpleTree::NodeRef NodeRef;
 
+// positional binary tree
+typedef onika::algorithm::TupleVectorPTree< std::vector< std::tuple<double,size_t,size_t,size_t> > > PTreeBase;
+typedef onika::algorithm::BTree< PTreeBase, std::less<double>, onika::algorithm::PNodeRefT > PTree;
+typedef typename PTree::NodeRef PNodeRef;
+
+
 void print(NodeRef node, int indent=0)
 {
-	for(int i=0;i<indent;i++) std::cout<<' ';
-	if( node.self == NodeRef::NullPtr ) 
-	{
-		std::cout<<"null\n";
-		return;
-	}
+	if( node.self == NodeRef::NullPtr ) return;
+	print(node.getRight(),indent+4);
+	for(int i=0;i<indent;i++){std::cout<<' ';}
 	std::cout<<node.getValue()<<" @"<<node.self<<"\n";
 	print(node.getLeft(),indent+4);
-	print(node.getRight(),indent+4);
 }
 
-/*
+void printsorted(NodeRef node)
+{
+	if( node.self == NodeRef::NullPtr ) return;
+	printsorted(node.getLeft());
+	std::cout<<node.getValue()<<" @"<<node.self<<"\n";
+	printsorted(node.getRight());
+}
+
 void print(PNodeRef node, int indent=0)
 {
-	for(int i=0;i<indent;i++) std::cout<<' ';
-	if( node == NodeRef::NullPtr ) 
-	{
-		std::cout<<"null\n";
-		return;
-	}
+	if( node.self == NodeRef::NullPtr ) return;
+	print(node.getRight(),indent+4);
+	for(int i=0;i<indent;i++){std::cout<<' ';}
 	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<"\n";
 	print(node.getLeft(),indent+4);
-	print(node.getRight(),indent+4);
 }
-*/
+
+void printsorted(PNodeRef node)
+{
+	if( node.self == NodeRef::NullPtr ) return;
+	printsorted(node.getLeft());
+	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<"\n";
+	printsorted(node.getRight());
+}
 
 int main()
 {
 	int seed = 33;
 	seed = (std::ptrdiff_t)(&seed);
 	std::cout<<"seeding with "<<seed<<"\n";
-	srand48(seed);
 
+	std::cout<<"Simple BTree Test\n";
+	srand48(seed);
 	SimpleTree t;
-	double value;
-	
 	for(int i=0;i<10;i++)
 	{
-		t.insert( drand48() );
+		double value = drand48();
+		t.insert( value );
 	}
-
 	print(t.getRoot());
+	std::cout<<"Sorted list\n";
+	printsorted(t.getRoot());
+
+
+	std::cout<<"Positional BTree Test\n";
+	srand48(seed);
+	PTree pt;
+	for(int i=0;i<10;i++)
+	{
+		double value = drand48();
+		std::cout<<"--- insert "<<value<<" ---\n";
+		pt.insert( value );
+		print(pt.getRoot());
+	}
+	std::cout<<"--- sorted list ---\n";
+	printsorted(pt.getRoot());
+
 
 	return 0;
 }
