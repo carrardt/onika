@@ -17,19 +17,5 @@ namespace onika {
 
 
 // ======================== UNIT TEST =======================
-#ifdef onika_bits_TEST
-
-#include <iostream>
-
-int main()
-{
-	std::cout<< onika::mask1lsb<uint64_t>(0) << "\n";
-	std::cout<< onika::mask1lsb<uint64_t>(64) << "\n";
-	std::cout<< onika::mask1lsb<uint64_t>(1) << "\n";
-	return 0;
-}
-
-#endif // end of unit test
-
 #endif // end of header file
 

@@ -20,13 +20,5 @@ inline codec::NullStream dbgmessage() { return codec::NullStream(); }
 #endif
 
 
-#ifdef onika_debug_dbgmessage_TEST
-
-int main()
-{
-	onika::debug::dbgmessage()<<"Hello world\n";
-	return 0;
-}
-
 #endif
 

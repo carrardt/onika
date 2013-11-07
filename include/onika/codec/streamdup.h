@@ -34,20 +34,6 @@ namespace onika { namespace codec {
 // ====================================================
 // =============== UNIT TEST ==========================
 // ====================================================
-#ifdef onika_codec_streamdup_TEST
-
-#include <iostream>
-
-int main()
-{
-	auto out = onika::codec::streamdup( std::cout, std::cerr );
-
-	out << "Hello World\n";
-	out.flush();
-
-	return 0;
-}
-
 #endif
 
 

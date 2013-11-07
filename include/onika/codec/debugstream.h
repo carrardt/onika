@@ -20,18 +20,5 @@ namespace onika { namespace codec {
 
 
 //============== UNIT TEST ==============
-#ifdef onika_codec_debugstream_TEST
-
-#include <iostream>
-
-int main()
-{
-	{
-		onika::codec::DebugStream dbgout( std::cout<<"DEBUG: " );
-		dbgout<<"message without newline";
-	}
-	return 0;
-}
-
 #endif
 

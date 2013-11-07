@@ -30,13 +30,5 @@ struct example_c2e_basic_traits
 // ==========================================================
 // =================== Unit Test ============================
 // ==========================================================
-#ifdef onika_mesh_cell2edge_TEST
-int main()
-{
-        return 0;
-}
-
-#endif // end of unit test
-
 #endif // end of file
 

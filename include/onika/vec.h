@@ -138,19 +138,5 @@ namespace onika {
 // ==========================================================
 // =================== Unit Test ============================
 // ==========================================================
-#ifdef onika_vec_TEST
-
-#include <iostream>
-
-int main()
-{
-	onika::Vec<3,int> v;
-	std::cin>>v.x[0]>>v.x[1]>>v.x[2];
-	std::cout<<"norm = "<<v.norm()<<"\n";
-	return 0;
-}
-
-#endif // end of unit test
-
 #endif // end of vec.h
 

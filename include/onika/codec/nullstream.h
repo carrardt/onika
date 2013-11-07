@@ -18,13 +18,5 @@ namespace onika { namespace codec {
 
 
 //=============== UNIT TEST ================
-#ifdef onika_codec_nullstream_TEST
-int main()
-{
-	onika::codec::NullStream ns;
-	ns<<"This number "<<65<<" will neve be printed\n";
-	return 0;
-}
-
 #endif
 

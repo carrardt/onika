@@ -22,13 +22,5 @@ inline void dbgassert(bool) { }
 #endif
 
 
-#ifdef onika_debug_dbgassert_TEST
-
-int main(int argc, char* argv[])
-{
-	onika::debug::dbgassert(argc<2);
-	return 0;
-}
-
 #endif
 

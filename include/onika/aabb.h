@@ -24,13 +24,5 @@ struct AxisAlignedBoundingBox
 #endif // __aabb_h
 
 
-#ifdef onika_aabb_TEST
-int main()
-{
-	AxisAlignedBoundingBox<3,float> aabb;
-	
-	return 0;
-}
-
 #endif
 
