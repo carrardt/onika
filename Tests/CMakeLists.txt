@@ -39,5 +39,4 @@ add_executable(onika_quantize_lossydoublequantizer_TEST onika_quantize_lossydoub
 add_executable(onika_tuple_TEST onika_tuple_TEST.cpp)
 add_executable(onika_valuetraits_TEST onika_valuetraits_TEST.cpp)
 add_executable(onika_vec_TEST onika_vec_TEST.cpp)
-add_executable(onika_vtk_readvtkascii_TEST onika_vtk_readvtkascii_TEST.cpp)
 

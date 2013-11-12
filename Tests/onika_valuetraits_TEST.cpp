@@ -7,5 +7,4 @@ int main()
 	std::cout<<"max float = "<< onika::value_traits<float>::min()<<std::endl;
 	return 0;
 }
-#endif
 
