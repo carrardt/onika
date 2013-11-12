@@ -21,8 +21,5 @@ struct AxisAlignedBoundingBox
 	CoordType min[NDim], max[NDim];
 };
 
-#endif // __aabb_h
-
-
 #endif
 

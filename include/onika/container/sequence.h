@@ -51,6 +51,3 @@ struct SequenceContainer
 #endif
 
 
-// ======================== UNIT TEST =======================
-#endif
-

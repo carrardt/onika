@@ -6,5 +6,3 @@ template<typename Type> struct it_type<Type*> { typedef Type* T; };
 
 #endif
 
-#endif
-

@@ -47,12 +47,19 @@ int main()
 
 	auto c1 = onika::container::zip_vectors( xvalues, yvalues, zvalues );
 	c1.resize( 9 );
-	c1.push_back( std::make_tuple(9, 3.14159, 0.5) );
-	c1.resize( 12 , std::make_tuple(12, 1.11, 0.1) );
+	std::tuple<int,double,float> c1InitA( 9, 3.14159, 0.5 );
+	c1.push_back( c1InitA );
+	//c1.push_back( std::make_tuple(9, 3.14159, 0.5) );
+
+	std::tuple<int,double,float> c1InitB( 12, 1.11, 0.1 );
+	c1.resize( 12 , c1InitB );
+	//c1.resize( 12 , std::make_tuple( 12, 1.11, 0.1 ) );
 	for( auto x : c1 ) { std::cout<< x <<"\n"; }
 		
 	auto c2 = onika::container::zip_vectors( avalues, bvalues );
-	c2.resize( 15, std::make_tuple("Default",'Z') );
+	std::tuple<std::string,char> c2Initializer( "Default", 'Z' );
+	c2.resize( 15, c2Initializer );
+	//c2.resize( 15, std::make_tuple( "Default", 'Z') );
 	for( auto x : c2 ) { std::cout<< x <<"\n"; }
 
 	return 0;

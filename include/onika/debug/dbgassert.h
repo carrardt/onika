@@ -21,6 +21,3 @@ inline void dbgassert(bool) { }
 
 #endif
 
-
-#endif
-

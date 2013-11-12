@@ -59,5 +59,4 @@ namespace onika { namespace container {
 
 
 
-#endif
 

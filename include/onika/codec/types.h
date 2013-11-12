@@ -89,6 +89,3 @@ namespace onika { namespace codec {
 #endif // __onika_codec_types_h
 
 
-// ======================== UNIT TEST =======================
-#endif
-

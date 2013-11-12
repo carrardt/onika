@@ -88,6 +88,7 @@ namespace onika { namespace codec {
 				unsigned char c = s[i];
 				(*this) << c;
 			}
+			return (*this);
 		}		
 
 		template<unsigned int NDim, typename CType>
@@ -213,11 +214,6 @@ namespace onika { namespace codec {
 
 } } // namespace
 
-#endif
-
-// ====================================================
-// =============== UNIT TEST ==========================
-// ====================================================
 #endif
 
 

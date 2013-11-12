@@ -151,8 +151,3 @@ DECL_AUTO_RET(container_traits<C>::wavelet_enc(c,a,b))
 #endif
 
 
-
-
-// ======================== UNIT TEST =======================
-#endif
-

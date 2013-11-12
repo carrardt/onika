@@ -19,6 +19,3 @@ inline codec::NullStream dbgmessage() { return codec::NullStream(); }
 
 #endif
 
-
-#endif
-

@@ -103,6 +103,9 @@ int main(int argc, char* argv[])
 	out<< onika::codec::bounded_value(124,100,150);
 	out.flush();
 	out.debug() << "--- bounded_integer ---";
+#endif
 
+	return 0;
+}
 
 

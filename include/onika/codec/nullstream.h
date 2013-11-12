@@ -17,6 +17,3 @@ namespace onika { namespace codec {
 #endif
 
 
-//=============== UNIT TEST ================
-#endif
-

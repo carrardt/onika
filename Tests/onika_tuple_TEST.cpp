@@ -33,7 +33,9 @@ int main()
 	auto t2 = std::make_tuple( std::ref(x), y, z, w );
 	auto seq = onika::tuple::sequence<4>();
 	auto zipseq = onika::tuple::tie_zip( t1, seq );
-	auto ziprep = onika::tuple::zip( t2, onika::tuple::repeat<4,int>( 50 ) );
+	//auto ziprep = onika::tuple::zip( t2, onika::tuple::repeat<4,int>( 50 ) ); // works with gcc 4.8, not with intel 13.0	
+	auto rep = onika::tuple::repeat<4,int>( 50 );
+	auto ziprep = onika::tuple::zip( t2, rep );
 	auto tt = std::tie( std::get<0>(t1) );
 	
 	std::cout<<"x="<<x<<", y="<<y<<", z="<<z<<", w[9]="<<w[9]<<"\n";

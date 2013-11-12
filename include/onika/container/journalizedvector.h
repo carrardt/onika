@@ -293,7 +293,7 @@ namespace std
 		size_t bi = itB.i; \
 		std::_F(jvec.m_indices.begin()+ai , \
 			jvec.m_indices.begin()+bi , \
-			[jvec,comp](size_t a, size_t b) -> bool { comp( jvec.get_indexed(a) , jvec.get_indexed(b) ); } ); \
+			[jvec,comp](size_t a, size_t b) -> bool { return comp( jvec.get_indexed(a) , jvec.get_indexed(b) ); } ); \
 	}
 
 	ONIKA_JVEC_STL_SORT_ADAPTOR(sort)

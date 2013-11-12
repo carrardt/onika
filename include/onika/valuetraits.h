@@ -25,6 +25,3 @@ struct value_traits
 
 #endif
 
-// ================== UNIT TEST ===============
-#endif
-

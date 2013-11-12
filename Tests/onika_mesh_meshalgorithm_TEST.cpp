@@ -83,5 +83,4 @@ int main()
 		std::cout<<"edge "<<edge<<" length = "<<edgeLength(mesh.vertices,edge)<<"\n";
 	}	return 0;
 }
-#endif
 
