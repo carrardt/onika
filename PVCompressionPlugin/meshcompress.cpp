@@ -44,7 +44,8 @@ int main(int argc, char* argv[])
 		std::cerr<<"Couldn't open '"<<outputFileName<<"' for writing\n";
 		return 1;
 	}
-
+// on le garde en commentaire pour exemple de quantification
+#if 0
 	Mesh basemesh;
 	basemesh.nullVertexPos = nullPos;
 	basemesh.nullVertexId = -1;
@@ -148,6 +149,8 @@ int main(int argc, char* argv[])
 	}
 
 	onika::debug::dbgassert( mesh.checkConsistency() );
+#endif
+
         std::cerr<<"\nDONE\n";
         return 0;
 }
