@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <functional>   // std::less
-
+#include <math.h>
 
 typedef onika::algorithm::IndexedLess< std::vector<double> > Compare;
 
@@ -13,21 +13,21 @@ typedef onika::algorithm::TupleVectorPTree< std::vector< std::tuple<int,size_t,s
 typedef onika::algorithm::BTree< PTreeBase, Compare, onika::algorithm::PNodeRefT > PTree;
 typedef typename PTree::NodeRef PNodeRef;
 
-void print(PNodeRef node, int indent=0)
+void print(const std::vector<double>& values, PNodeRef node, int indent=0)
 {
 	if( node.self == PNodeRef::NullPtr ) return;
-	print(node.getRight(),indent+4);
+	print(values,node.getRight(),indent+4);
 	for(int i=0;i<indent;i++){std::cout<<' ';}
-	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<"\n";
-	print(node.getLeft(),indent+4);
+	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<", V="<<values[node.getValue()]<<"\n";
+	print(values,node.getLeft(),indent+4);
 }
 
-void printsorted(PNodeRef node)
+void printsorted(const std::vector<double>& values,PNodeRef node)
 {
 	if( node.self == PNodeRef::NullPtr ) return;
-	printsorted(node.getLeft());
-	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<"\n";
-	printsorted(node.getRight());
+	printsorted(values,node.getLeft());
+	std::cout<<node.getValue()<<" @"<<node.self<<", P="<<node.getPosition()<<", V="<<values[node.getValue()]<<"\n";
+	printsorted(values,node.getRight());
 }
 
 int main()
@@ -37,8 +37,10 @@ int main()
 	std::cout<<"seeding with "<<seed<<"\n";
 	srand48(seed);
 
-	std::vector<double> values(100);
-	for(int i=0;i<100;i++)
+	constexpr unsigned int N = 1000;
+
+	std::vector<double> values(N);
+	for(int i=0;i<N;i++)
 	{
 		values[i]=drand48();
 	}
@@ -46,13 +48,20 @@ int main()
 	auto iless = onika::algorithm::indexed_less( values );
 	std::cout<<"Positional BTree Test\n";
 	PTree pt( iless );
-	for(int i=0;i<100;i++)
+	for(int i=0;i<N;i++)
 	{
 		pt.insert(i);
 	}
 	std::cout<<"--- sorted list ---\n";
-	printsorted(pt.getRoot());
+	printsorted(values,pt.getRoot());
 
+	std::cout<<"--- tree stats ---\n";
+	unsigned int dmin=-1, dmax=0;
+	onika::algorithm::probe_btree_depth( pt.getRoot(), dmin, dmax );
+	std::cout<<"Log2(N) = "<<log2(N) <<"\n";
+	std::cout<<"Min depth = "<<dmin<<"\n";
+	std::cout<<"Max depth = "<<dmax<<"\n";
+	std::cout<<"inbalance = "<<(dmax-dmin)/log2(N)<<"\n";
 	return 0;
 }
  // end of file
