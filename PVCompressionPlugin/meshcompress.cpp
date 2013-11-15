@@ -3,6 +3,69 @@
 #include <iostream>
 #include <fstream>
 
+#include "onika/mesh/cell2vertex.h"
+#include "onika/mesh/vertex2cell.h"
+#include "onika/mesh/simplicialmesh.h"
+#include "onika/vtk/readvtkascii.h"
+#include "onika/codec/asciistream.h"
+#include "onika/tuple.h"
+
+struct Mesh
+{
+	typedef struct { double x[3]; } VertexPos;
+
+	inline Mesh() : nverts(0) {}
+
+	inline void addVertex(const VertexPos& p)
+	{
+		vertices.push_back( std::make_tuple( std::make_tuple(p.x[0],p.x[1],p.x[2]) , (double)nverts ) );
+		nverts++;
+	}
+	
+	template<class VertIdIterator>
+	inline void addCell(int np, VertIdIterator it)
+	{
+		if( np != 4 ) return;
+		for(int i=0;i<np; ++i, ++it) cells.push_back( *it );
+	}
+
+	inline size_t getNumberOfCells() const { return cells.size()/4; }
+	inline size_t getNumberOfVertices() const { return vertices.size(); }
+
+	template<class Iterator>
+	void addCellScalars(const std::string& name, Iterator first, Iterator last)
+	{
+		onika::debug::dbgmessage() << "Add cell scalars "<<name<<"\n";
+		cellScalars.clear();
+		for(Iterator it=first; it!=last; ++it)
+		{
+			cellScalars.push_back( *it );
+		}
+	}
+
+	template<class Iterator>
+	void addVertexScalars(const std::string& name, Iterator first, Iterator last)
+	{
+		onika::debug::dbgmessage() << "Add vertex scalars "<<name<<"\n";
+		size_t i=0;
+		for(Iterator it=first; it!=last; ++it, ++i )
+		{
+			std::get<1>( vertices[i] ) = *it;
+		}
+		onika::debug::dbgassert( i == vertices.size() );
+	}
+
+	std::vector<int> cells;
+	int nverts;
+	std::vector< std::tuple< std::tuple<double,double,double> , double > > vertices;
+	std::vector< double > cellScalars;
+};
+
+// define how connectivity is mapped to your data storage
+typedef onika::mesh::smesh_c2v_basic_traits< std::vector<int>, 3 > MyC2VBasicTraits;
+typedef onika::mesh::c2v_traits< MyC2VBasicTraits > MyC2VTraits;
+typedef onika::mesh::C2VWrapper<MyC2VTraits> MyC2VWrapper;
+typedef onika::mesh::ReverseC2V<MyC2VWrapper, std::vector<int>, std::vector<unsigned int> > V2C;
 
 
 int main(int argc, char* argv[])
@@ -44,6 +107,22 @@ int main(int argc, char* argv[])
 		std::cerr<<"Couldn't open '"<<outputFileName<<"' for writing\n";
 		return 1;
 	}
+
+	std::cout<<"Input = "<<inputFileName<<"\n";
+	std::cout<<"Output = "<<outputFileName<<"\n";
+	std::cout<<"Edges = "<<nedges<<"\n";
+
+	Mesh mesh;
+	onika::vtk::readVtkAsciiMesh(ifile,mesh);
+	onika::vtk::readVtkAsciiScalars(ifile,mesh);
+
+	// build reverse connectivity
+	V2C v2c( mesh.cells, mesh.nverts ); 
+	//onika::debug::dbgassert( v2c.checkConsistency(mesh.nverts) );
+	
+	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
+
+
 // on le garde en commentaire pour exemple de quantification
 #if 0
 	Mesh basemesh;
