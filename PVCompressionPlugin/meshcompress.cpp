@@ -10,6 +10,21 @@
 #include "onika/codec/asciistream.h"
 #include "onika/tuple.h"
 
+#include "onika/mesh/meshalgorithm.h" // cellminedgelength
+#include "onika/mesh/simplicialmesh.h"  // smesh_c2e_basic_traits
+
+#include "onika/tuple.h"
+#include "onika/language.h"  // ONIKA_AUTO_RET macro
+#include "onika/mathfunc.h" // distance and other tuple based mathematical funcs
+
+typedef std::vector< std::tuple<
+		std::tuple<double,double,double>	// vertex position
+		, double				// vertex scalar
+		> > MyVertexContainer;
+
+typedef std::vector<int> MyCellContainer;
+typedef std::vector<double> MyCellValueContainer;
+
 struct Mesh
 {
 	typedef struct { double x[3]; } VertexPos;
@@ -55,10 +70,10 @@ struct Mesh
 		onika::debug::dbgassert( i == vertices.size() );
 	}
 
-	std::vector<int> cells;
+	MyCellContainer cells;
+	MyVertexContainer vertices;
+	MyCellValueContainer cellScalars;
 	int nverts;
-	std::vector< std::tuple< std::tuple<double,double,double> , double > > vertices;
-	std::vector< double > cellScalars;
 };
 
 // define how connectivity is mapped to your data storage
@@ -67,6 +82,20 @@ typedef onika::mesh::c2v_traits< MyC2VBasicTraits > MyC2VTraits;
 typedef onika::mesh::C2VWrapper<MyC2VTraits> MyC2VWrapper;
 typedef onika::mesh::ReverseC2V<MyC2VWrapper, std::vector<int>, std::vector<unsigned int> > V2C;
 
+// edge accessor
+typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> MyC2EBasicTraits;
+
+
+// define distance between 2 vertices
+namespace onika { namespace mesh {
+inline auto vertexDistance( const MyVertexContainer& vertices, int a, int b )
+ONIKA_AUTO_RET( onika::math::distance(
+	  std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[a]) )
+	, std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[b]) )
+	) )
+} }
+
+//onika::mesh::CellMinEdgeLengthCompare<>
 
 int main(int argc, char* argv[])
 {
@@ -122,6 +151,7 @@ int main(int argc, char* argv[])
 	
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
 
+	//onika::mesh::CellMinEdgeLengthCompare<>
 
 // on le garde en commentaire pour exemple de quantification
 #if 0

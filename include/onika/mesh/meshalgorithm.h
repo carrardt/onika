@@ -123,6 +123,7 @@ struct CellMinEdgeLengthCompare
 	const CellContainer& cells;
 };
 
+
 } } // end of namespace
 
 #endif
