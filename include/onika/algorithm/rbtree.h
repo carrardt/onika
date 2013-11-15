@@ -221,6 +221,26 @@ struct BTree : public BTreeBase
 	ValueCompare compare;
 };
 
+template<class NodeRef>
+void probe_btree_depth(NodeRef node, unsigned int depth, unsigned int& minDepth, unsigned int &maxDepth)
+{
+	if( node.self == NodeRef::NullPtr )
+	{
+		if( depth < minDepth ) minDepth = depth;
+		if( depth > maxDepth ) maxDepth = depth;
+		return;
+	}
+	probe_btree_depth( node.getLeft(), depth+1, minDepth, maxDepth );
+	probe_btree_depth( node.getRight(), depth+1, minDepth, maxDepth );
+}
+
+template<class NodeRef>
+void probe_btree_depth(NodeRef node, unsigned int& minDepth, unsigned int &maxDepth)
+{
+	minDepth = -1;
+	maxDepth = 0;
+	probe_btree_depth( node, 0, minDepth, maxDepth );
+}
 
 
 } } // end of namespace
