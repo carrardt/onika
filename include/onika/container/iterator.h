@@ -258,24 +258,30 @@ namespace std
 	}
 }
 
-//==========================================
-//===      math specialization           ===
-//==========================================
-#include "onika/mathfunc.h"
+// ==========================================================
+// ====== MATH SPECIALIZATION FOR CONTAINER ACCESSORS =======
+// ==========================================================
+#ifdef __onika_mathfunc_h
 namespace onika { namespace math {
+#define _MATH_FUNC1(name,AccT) \
+template<class T>\
+inline auto name(container::AccT<T,true> x) \
+ONIKA_AUTO_RET( math::name(x.get()) ) 
+
 #define MATH_FUNC1(name) \
-template<class T> inline auto name(const container::ConstElementAccessorT<T,true>& x) ONIKA_AUTO_RET( math::name( x.get() ) ) \
-template<class T> inline auto name(const container::ElementAccessorT<T,true>& x) ONIKA_AUTO_RET( math::name( x.get() ) )
+_MATH_FUNC1(name,ElementAccessorT) \
+_MATH_FUNC1(name,ConstElementAccessorT) 
+
+#define _MATH_FUNC2(name,AccT1,AccT2) \
+template<class T1, class T2> \
+inline auto name(container::AccT1<T1,true> x, container::AccT2<T2,true> y) \
+ONIKA_AUTO_RET( math::name(x.get(),y.get()) )
 
 #define MATH_FUNC2(name) \
-template<class T,class T2> inline auto name(const container::ConstElementAccessorT<T,true>& x, const container::ConstElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x.get(),y.get())) \
-template<class T,class T2> inline auto name(const container::ConstElementAccessorT<T,true>& x, const container::ElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x.get(),y.get()))\
-template<class T,class T2> inline auto name(const container::ElementAccessorT<T,true>& x, const container::ConstElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x.get(),y.get()))\
-template<class T,class T2> inline auto name(const container::ElementAccessorT<T,true>& x, const container::ElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x.get(),y.get()))\
-template<class T,class T2> inline auto name(const container::ElementAccessorT<T,true>& x, const T2& y) ONIKA_AUTO_RET(math::name(x.get(),y))\
-template<class T,class T2> inline auto name(const container::ConstElementAccessorT<T,true>& x, const T2& y) ONIKA_AUTO_RET(math::name(x.get(),y))\
-template<class T,class T2> inline auto name(const T& x, const container::ElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x,y.get()))\
-template<class T,class T2> inline auto name(const T& x, const container::ConstElementAccessorT<T2,true>& y) ONIKA_AUTO_RET(math::name(x,y.get()))
+_MATH_FUNC2(name,ElementAccessorT,ElementAccessorT) \
+_MATH_FUNC2(name,ElementAccessorT,ConstElementAccessorT) \
+_MATH_FUNC2(name,ConstElementAccessorT,ElementAccessorT) \
+_MATH_FUNC2(name,ConstElementAccessorT,ConstElementAccessorT)
 
 // MATH_FUNC1(abs)
 MATH_FUNC1(norm)
@@ -286,9 +292,8 @@ MATH_FUNC2(distance2)
 
 #undef MATH_FUNC1
 #undef MATH_FUNC2
-
 } }
+#endif // if mathfunc has been included 
 
-// ======================== UNIT TEST =======================
 #endif // end of iterator.h
 

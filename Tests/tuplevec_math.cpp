@@ -1,7 +1,7 @@
-#include "onika/container/iterator.h"
-#include "onika/container/tuplevec.h"
 #include "onika/tuple.h"
 #include "onika/mathfunc.h"
+#include "onika/container/iterator.h"
+#include "onika/container/tuplevec.h"
 
 #include <iostream>
 #include <vector>
@@ -29,31 +29,6 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 	return out;
 }
 
-// ==========================================================
-// ====== MATH SPECIALIZATION FOR CONTAINER ACCESSORS =======
-// ==========================================================
-namespace onika { namespace math {
-#define MATH_FUNC1(name) \
-template<class T>\
-inline auto name(container::ElementAccessorT<T> x) \
-ONIKA_AUTO_RET( name(x.get()) )
-
-#define MATH_FUNC2(name) \
-template<class T1, class T2> \
-inline auto name(container::ElementAccessorT<T1> x, container::ElementAccessorT<T2> y) \
-ONIKA_AUTO_RET( name(x.get(),y.get()) )
-
-// MATH_FUNC1(abs)
-MATH_FUNC1(norm)
-MATH_FUNC1(norm2)
-MATH_FUNC2(dot)
-MATH_FUNC2(distance)
-MATH_FUNC2(distance2)
-#undef MATH_FUNC1
-#undef MATH_FUNC2
-} }
-
-
 #if 0
 namespace onika { namespace math {
 inline auto vertexDistance( const MyVertexContainer& vertices, int a, int b )
@@ -63,6 +38,8 @@ ONIKA_AUTO_RET( onika::math::distance(
 	) )
 } }
 #endif
+
+
 
 ONIKA_USE_MATH;
 ONIKA_USE_TUPLE_MATH;
