@@ -126,10 +126,7 @@ namespace onika { namespace tuple {
 		BIN_OP(>=,greater_or_equal_op)
 		BIN_OP(==,equal_op)
 #undef BIN_OP
-#define COMP_OP(op,f) \
-	template<class... T1, class... T2> inline auto operator op (const std::tuple<T1...>& x, const std::tuple<T2...>& y ) \
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::f( x , y ) )
-#undef COMP_OP
+
 #define UN_OP(op,f) \
 		template<class... T1> inline auto f (const std::tuple<T1...>& t1) \
 		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::f(t1) , std::make_tuple( op std::get<N-1>(t1) )  ) )
@@ -314,7 +311,6 @@ namespace onika { namespace tuple {
 
 	template<class StreamT, class... T>
 	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
-	
 
 	// ========================================
 	// =============== MATH ===================

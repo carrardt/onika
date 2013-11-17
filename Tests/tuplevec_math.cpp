@@ -2,11 +2,10 @@
 #include "onika/mathfunc.h"
 #include "onika/container/iterator.h"
 #include "onika/container/tuplevec.h"
-
+#include "onika/mesh/meshalgorithm.h"
 #include <iostream>
 #include <vector>
 #include <tuple>
-#include <utility>
 
 template<class... T>
 inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
@@ -29,16 +28,16 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 	return out;
 }
 
-#if 0
-namespace onika { namespace math {
-inline auto vertexDistance( const MyVertexContainer& vertices, int a, int b )
-ONIKA_AUTO_RET( onika::math::distance(
-	  std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[a]) )
-	, std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[b]) )
-	) )
-} }
-#endif
+typedef std::vector< std::tuple<
+		std::tuple<double,double,double>	// vertex position
+		, double				// vertex scalar
+		> > MyVertexContainer;
 
+namespace onika { namespace mesh {
+template<class IdType>
+inline auto vertexDistance( const MyVertexContainer& vertices, IdType a, IdType b )
+ONIKA_AUTO_RET(   onika::math::distance( std::get<1>(vertices[a]), std::get<1>(vertices[b]) )   )
+} }
 
 ONIKA_USE_MATH;
 ONIKA_USE_TUPLE_MATH;
@@ -57,9 +56,28 @@ int main()
 	}
 
 	auto c1 = onika::container::zip_vectors( xvalues, yvalues, zvalues );
-	for( auto x : c1 ) { std::cout<< x <<"\n"; }
+	for( auto x : c1 )
+	{
+		std::tuple<int,double,float> element = x;
+		int i = std::get<0>( element );
+		std::cout<< "zip["<<i<<"] = "<<element << "\n";
+	}
 	std::cout<<"distance between 5 and 7 : "<< distance( c1[5], c1[7] )<<"\n";
 
+	MyVertexContainer vertices(10);
+	for(int i=0;i<10;i++)
+	{
+		std::get<0>( std::get<0>( vertices[i] ) ) = i*1.1;
+		std::get<1>( std::get<0>( vertices[i] ) ) = i*1.2;
+		std::get<2>( std::get<0>( vertices[i] ) ) = i*1.3;
+		std::get<1>( vertices[i] ) = i*0.3;
+	}
+	for( int i=0;i<10;i++ )
+	{
+		std::cout<< "vertices["<<i<<"] = "<<vertices[i] << "\n";
+	}
+	//std::cout<<"distance between 5 and 7 : "<< onika::mesh::vertexDistance(vertices,5,7) <<"\n";
+	
 	return 0;
 }
 

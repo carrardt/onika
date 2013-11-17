@@ -3,19 +3,21 @@
 #include <iostream>
 #include <fstream>
 
+#include "onika/tuple.h"
+#include "onika/mathfunc.h"
+#include "onika/container/iterator.h"
+#include "onika/container/tuplevec.h"
+
 #include "onika/mesh/cell2vertex.h"
 #include "onika/mesh/vertex2cell.h"
 #include "onika/mesh/simplicialmesh.h"
+#include "onika/mesh/meshalgorithm.h" // cellminedgelength
+
 #include "onika/vtk/readvtkascii.h"
 #include "onika/codec/asciistream.h"
-#include "onika/tuple.h"
 
-#include "onika/mesh/meshalgorithm.h" // cellminedgelength
-#include "onika/mesh/simplicialmesh.h"  // smesh_c2e_basic_traits
-
-#include "onika/tuple.h"
 #include "onika/language.h"  // ONIKA_AUTO_RET macro
-#include "onika/mathfunc.h" // distance and other tuple based mathematical funcs
+
 
 typedef std::vector< std::tuple<
 		std::tuple<double,double,double>	// vertex position
@@ -86,18 +88,9 @@ typedef onika::mesh::ReverseC2V<MyC2VWrapper, std::vector<int>, std::vector<unsi
 typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> MyC2EBasicTraits;
 
 
-// define distance between 2 vertices
-#if 0
-namespace onika { namespace math {
-inline auto vertexDistance( const MyVertexContainer& vertices, int a, int b )
-ONIKA_AUTO_RET( onika::math::distance(
-	  std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[a]) )
-	, std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[b]) )
-	) )
-} }
-#endif
-
 //onika::mesh::CellMinEdgeLengthCompare<>
+ONIKA_USE_MATH;
+ONIKA_USE_TUPLE_MATH;
 
 int main(int argc, char* argv[])
 {
