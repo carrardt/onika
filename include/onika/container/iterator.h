@@ -261,12 +261,11 @@ namespace std
 // ==========================================================
 // ====== MATH SPECIALIZATION FOR CONTAINER ACCESSORS =======
 // ==========================================================
-#ifdef __onika_mathfunc_h
 namespace onika { namespace math {
 #define _MATH_FUNC1(name,AccT) \
 template<class T>\
 inline auto name(container::AccT<T,true> x) \
-ONIKA_AUTO_RET( math::name(x.get()) ) 
+ONIKA_AUTO_RET( name(x.get()) ) 
 
 #define MATH_FUNC1(name) \
 _MATH_FUNC1(name,ElementAccessorT) \
@@ -275,7 +274,7 @@ _MATH_FUNC1(name,ConstElementAccessorT)
 #define _MATH_FUNC2(name,AccT1,AccT2) \
 template<class T1, class T2> \
 inline auto name(container::AccT1<T1,true> x, container::AccT2<T2,true> y) \
-ONIKA_AUTO_RET( math::name(x.get(),y.get()) )
+ONIKA_AUTO_RET( name(x.get(),y.get()) )
 
 #define MATH_FUNC2(name) \
 _MATH_FUNC2(name,ElementAccessorT,ElementAccessorT) \
@@ -293,7 +292,6 @@ MATH_FUNC2(distance2)
 #undef MATH_FUNC1
 #undef MATH_FUNC2
 } }
-#endif // if mathfunc has been included 
 
 #endif // end of iterator.h
 
