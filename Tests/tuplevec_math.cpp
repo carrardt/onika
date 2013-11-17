@@ -40,7 +40,6 @@ ONIKA_AUTO_RET( onika::math::distance(
 #endif
 
 
-
 ONIKA_USE_MATH;
 ONIKA_USE_TUPLE_MATH;
 
