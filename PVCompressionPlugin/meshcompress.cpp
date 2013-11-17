@@ -87,13 +87,15 @@ typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> MyC2EBasicTraits;
 
 
 // define distance between 2 vertices
-namespace onika { namespace mesh {
+#if 0
+namespace onika { namespace math {
 inline auto vertexDistance( const MyVertexContainer& vertices, int a, int b )
 ONIKA_AUTO_RET( onika::math::distance(
 	  std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[a]) )
 	, std::get<0>( static_cast<typename MyVertexContainer::value_type>(vertices[b]) )
 	) )
 } }
+#endif
 
 //onika::mesh::CellMinEdgeLengthCompare<>
 

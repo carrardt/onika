@@ -13,7 +13,7 @@ namespace onika { namespace container {
 /*
  * Random access iterator base.
  * Implements the "element accessor" design pattern. acts mostly like a reference to a virtually stored element
- * WARNING ! every class A here, is to be understood as RandomAccessVectorA
+ * WARNING ! every container class is understood as a Random Access container (implementing the [] in constant time)
  */
 
 template<typename Container, bool implement_math_ops = std::is_arithmetic<typename Container::value_type>::value> struct ElementAccessorT;
