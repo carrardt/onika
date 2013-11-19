@@ -2,7 +2,6 @@
 #include "onika/mathfunc.h"
 #include "onika/container/iterator.h"
 #include "onika/container/tuplevec.h"
-#include "onika/mesh/meshalgorithm.h"
 #include <iostream>
 #include <vector>
 #include <tuple>
@@ -39,9 +38,6 @@ inline auto vertexDistance( const MyVertexContainer& vertices, IdType a, IdType 
 ONIKA_AUTO_RET(   onika::math::distance( std::get<1>(vertices[a]), std::get<1>(vertices[b]) )   )
 } }
 
-ONIKA_USE_MATH;
-ONIKA_USE_TUPLE_MATH;
-
 int main()
 {
 	std::vector<int> xvalues(10);
@@ -62,7 +58,7 @@ int main()
 		int i = std::get<0>( element );
 		std::cout<< "zip["<<i<<"] = "<<element << "\n";
 	}
-	std::cout<<"distance between 5 and 7 : "<< distance( c1[5], c1[7] )<<"\n";
+	//std::cout<<"distance between 5 and 7 : "<< distance( c1[5], c1[7] )<<"\n";
 
 	MyVertexContainer vertices(10);
 	for(int i=0;i<10;i++)
