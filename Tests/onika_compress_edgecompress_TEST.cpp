@@ -105,10 +105,10 @@ int main(int argc, char* argv[])
 	Mesh mesh;
 	onika::vtk::readVtkAsciiMesh(ifile,mesh);
 	onika::vtk::readVtkAsciiScalars(ifile,mesh);
-	
+
 	V2C v2c( mesh.cells, mesh.nverts ); 
 	//onika::debug::dbgassert( v2c.checkConsistency(mesh.nverts) );
-	
+
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
 
 	int v=0;

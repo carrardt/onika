@@ -8,18 +8,6 @@
 #include <type_traits>
 #include "onika/language.h"
 
-namespace std
-{
-	template<class T>
-	class is_arithmetic< std::tuple<T> > : public std::is_arithmetic<T> {};
-
-	template<class T, class... Types>
-	class is_arithmetic< std::tuple<T,Types...> > : public std::integral_constant<bool,
-		   is_arithmetic<T>::value
-		&& is_arithmetic<std::tuple<Types...> >::value
-		> {};
-}
-
 namespace onika { namespace tuple {
 
 	template<unsigned int N> struct TupleHelper;
@@ -104,39 +92,6 @@ namespace onika { namespace tuple {
 				   );
 		}
 
-		// =============== MATH ===================
-#define BIN_OP(op,f) \
-		template<class... Types1, class... Types2> \
-		static inline auto f( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 ) \
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::f(t1,t2) , std::make_tuple( std::get<N-1>(t1) op std::get<N-1>(t2) )  ) ) \
-		template<class... Types1, class Type2> \
-		static inline auto f( const std::tuple<Types1...>& t1 , const Type2& t2 ) \
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::f(t1,t2) , std::make_tuple( std::get<N-1>(t1) op t2 )  ) )
-		BIN_OP(+,add_op)
-		BIN_OP(-,subtract_op)
-		BIN_OP(*,multiply_op)
-		BIN_OP(/,divide_op)
-		BIN_OP(&&,logical_and_op)
-		BIN_OP(||,logical_or_op)
-		BIN_OP(&,bitwise_and_op)
-		BIN_OP(|,bitwise_or_op)
-		BIN_OP(<,less_op)
-		BIN_OP(<=,less_or_equal_op)
-		BIN_OP(>,greater_op)
-		BIN_OP(>=,greater_or_equal_op)
-		BIN_OP(==,equal_op)
-#undef BIN_OP
-
-#define UN_OP(op,f) \
-		template<class... T1> inline auto f (const std::tuple<T1...>& t1) \
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::f(t1) , std::make_tuple( op std::get<N-1>(t1) )  ) )
-		UN_OP(-,negate)
-		UN_OP(!,logical_not)
-		UN_OP(~,bitwise_not)
-#undef UN_OP
-		template<class... Types1, class... Types2>
-		static inline auto dot( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( TupleHelper<N-1>::dot(t1,t2) + ( std::get<N-1>(t1) * std::get<N-1>(t2) )  )
 	};
 	
 	template<> struct TupleHelper<1>
@@ -175,38 +130,6 @@ namespace onika { namespace tuple {
 			return tuple::lexical_order( std::get<0>(t1), std::get<0>(t2) );
 		}
 
-		// =============== MATH ===================
-#define BIN_OP(op,f) \
-		template<class... Types1, class... Types2> \
-		static inline auto f( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 ) \
-		ONIKA_AUTO_RET( std::make_tuple( std::get<0>(t1) op std::get<0>(t2) ) ) \
-		template<class... Types1, class Type2> \
-		static inline auto f( const std::tuple<Types1...>& t1 , const Type2& t2 ) \
-		ONIKA_AUTO_RET( std::make_tuple( std::get<0>(t1) op t2 ) )
-		BIN_OP(+,add_op)
-		BIN_OP(-,subtract_op)
-		BIN_OP(*,multiply_op)
-		BIN_OP(/,divide_op)
-		BIN_OP(&&,logical_and_op)
-		BIN_OP(||,logical_or_op)
-		BIN_OP(&,bitwise_and_op)
-		BIN_OP(|,bitwise_or_op)
-		BIN_OP(<,less_op)
-		BIN_OP(<=,less_or_equal_op)
-		BIN_OP(>,greater_op)
-		BIN_OP(>=,greater_or_equal_op)
-		BIN_OP(==,equal_op)
-#undef BIN_OP
-#define UN_OP(op,f) \
-		template<class... T1> inline auto f (const std::tuple<T1...>& t1) \
-		ONIKA_AUTO_RET( std::make_tuple( op std::get<0>(t1) ) )
-		UN_OP(-,negate)
-		UN_OP(!,logical_not)
-		UN_OP(~,bitwise_not)
-#undef UN_OP
-		template<class... Types1, class... Types2>
-		static inline auto dot( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( std::get<0>(t1) * std::get<0>(t2) )
 	};
 
 	template<> struct TupleHelper<0>
@@ -230,6 +153,15 @@ namespace onika { namespace tuple {
 		
 		template<class T>
 		static inline std::tuple<> repeat(const T& x) { return std::tuple<>(); }
+
+		static inline bool all_equal(const std::tuple<>& t1 , const std::tuple<>& t2)
+		{
+			return true;
+		}
+		static inline bool lexical_order(const std::tuple<>& t1 , const std::tuple<>& t2)
+		{
+			return false;
+		}
 	};
 
 	// ======== apply =============
@@ -311,89 +243,8 @@ namespace onika { namespace tuple {
 
 	template<class StreamT, class... T>
 	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
-
-	// ========================================
-	// =============== MATH ===================
-	// ========================================
-#define BIN_OP(op,f) \
-	template<class... T1, class... T2> inline auto operator op (const std::tuple<T1...>& x, const std::tuple<T2...>& y ) \
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::f( x , y ) ) \
-	template<class... T1, class T2> inline auto operator op (const std::tuple<T1...>& x, const T2& y ) \
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::f( x , y ) )
-	BIN_OP(+,add_op)
-	BIN_OP(-,subtract_op)
-	BIN_OP(*,multiply_op)
-	BIN_OP(/,divide_op)
-	BIN_OP(&&,logical_and_op)
-	BIN_OP(||,logical_or_op)
-	BIN_OP(&,bitwise_and_op)
-	BIN_OP(|,bitwise_or_op)
-	BIN_OP(<,less_op)
-	BIN_OP(<=,less_or_equal_op)
-	BIN_OP(>,greater_op)
-	BIN_OP(>=,greater_or_equal_op)
-	BIN_OP(==,equal_op)
-#undef BIN_OP
-
-#define UN_OP(op,f) \
-	template<class... T1> inline auto operator op (const std::tuple<T1...>& x) \
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::f( x ) )
-	UN_OP(-,negate)
-	UN_OP(!,logical_not)
-	UN_OP(~,bitwise_not)
-#undef UN_OP
-
-	template<class... T1, class... T2> inline auto dot (const std::tuple<T1...>& x, const std::tuple<T2...>& y )
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::dot( x , y ) )
-	template<class... T1> inline auto norm2 (const std::tuple<T1...>& x )
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(T1)>::dot( x , x ) )
-	template<class... T1, class... T2> inline auto distance2 (const std::tuple<T1...>& x , const std::tuple<T2...>& y )
-	ONIKA_AUTO_RET( tuple::norm2( y - x ) )
-	template<class... T1> inline auto norm (const std::tuple<T1...>& x )
-	ONIKA_AUTO_RET( std::sqrt( (double) tuple::norm2( x ) ) )
-	template<class... T1, class... T2> inline auto distance (const std::tuple<T1...>& x , const std::tuple<T2...>& y )
-	ONIKA_AUTO_RET( std::sqrt( (double) tuple::distance2( x , y ) ) )
 	
 } }
-
-
-// ==========================================================
-// =============MATH SPECIALIZATION FOR TUPLES ==============
-// ==========================================================
-namespace onika { namespace math {
-#define MATH_FUNC1(name) \
-template<class... T1> inline auto name(const std::tuple<T1...>& x) ONIKA_AUTO_RET( tuple::name(x) )
-#define MATH_FUNC2(name) \
-template<class... T1, class... T2> inline auto name(const std::tuple<T1...>& x, const std::tuple<T2...>& y) ONIKA_AUTO_RET( tuple::name(x,y) )
-
-// MATH_FUNC1(abs)
-MATH_FUNC1(norm)
-MATH_FUNC1(norm2)
-MATH_FUNC2(dot)
-MATH_FUNC2(distance)
-MATH_FUNC2(distance2)
-#undef MATH_FUNC1
-#undef MATH_FUNC2
-} }
-
-#define ONIKA_USE_TUPLE_MATH \
-using onika::tuple::operator +; \
-using onika::tuple::operator -; \
-using onika::tuple::operator *; \
-using onika::tuple::operator /; \
-using onika::tuple::operator &&; \
-using onika::tuple::operator ||; \
-using onika::tuple::operator &; \
-using onika::tuple::operator |; \
-using onika::tuple::operator !; \
-using onika::tuple::operator ~; \
-using onika::tuple::operator >; \
-using onika::tuple::operator >=; \
-using onika::tuple::operator <; \
-using onika::tuple::operator <=; \
-using onika::tuple::operator ==; \
-using onika::tuple::all_equal; \
-using onika::tuple::lexical_order
 
 #define ONIKA_USE_TUPLE_OSTREAM \
 template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }

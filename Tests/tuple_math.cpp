@@ -1,4 +1,6 @@
+#include "onika/mathfunc.h"
 
+ONIKA_USE_MATH
 
 int main()
 {

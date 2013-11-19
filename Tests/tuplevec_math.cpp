@@ -1,5 +1,4 @@
 #include "onika/tuple.h"
-#include "onika/mathfunc.h"
 #include "onika/container/iterator.h"
 #include "onika/container/tuplevec.h"
 #include <iostream>
