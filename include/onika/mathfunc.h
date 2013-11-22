@@ -132,25 +132,39 @@ namespace onika { namespace math {
 #undef 	MATH_FUNC2
 	};
 
-#define TUPLECAT_INIT(x) std::make_tuple(x)
-#define TUPLECAT_REDUCE(t,x) std::tuple_cat(t,std::make_tuple(x))
-#define NO_INIT(x) (x)
-#define ADD_REDUCE(t,x) ((t)+(x))
+#define MATH_FUNC1(name) \
+	template <class T> inline auto name(const T& x) ONIKA_AUTO_RET( UnaryFunc<T>::name(x) )
+	MATH_FUNC1(negate)
+	MATH_FUNC1(inverse)
+	MATH_FUNC1(abs)
+	MATH_FUNC1(norm)
+	MATH_FUNC1(norm2)
+#undef 	MATH_FUNC1
 
 	template <class T1, class T2=T1> struct TupleMath
 	{
-#define ITERATE_MATH_FUNC1()
-		template<int I> static inline auto name##_t_aux(const T1& x) \
-		ONIKA_AUTO_RET( reduce( name##_t_aux<I-1>(x) , init(std::get<I>(x)) ) ) \
-		static inline auto name##_t_aux<0>(const T1& x) \
-		ONIKA_AUTO_RET( init( std::get<0>(x) ) ) \
-		static inline auto name##_t(const T1& x) ONIKA_AUTO_RET( name##_t_aux<TupleLength<T1>::value>(x) )
-		MATH_FUNC1(negate)
-		MATH_FUNC1(inverse)
-		MATH_FUNC1(abs)
-
+#define MT(x) std::make_tuple(x)
+#define TA(x,y) std::tuple_cat(x,MT(y))
+#define TG(t,i) std::get<i>(t)
+#define MATH_FUNC1(name) \
+		template<int I> static inline auto i_##name##_t(const T& x) ONIKA_AUTO_RET( TA( i_##name##_t<I-1>(x) , name(TG(x,I-1)) ) ) \
+		static inline auto i_##name##_t<0>(const T& x) ONIKA_AUTO_RET( MT(name(TG(x,0))) )
+	MATH_FUNC1(negate)
+	MATH_FUNC1(inverse)
+	MATH_FUNC1(abs)
+	MATH_FUNC1(norm)
+	MATH_FUNC1(norm2)
+#undef MATH_FUNC1
+		/*
 		static inline auto norm2_t(const T1& x) ONIKA_AUTO_RET( dot_tt(x,x) )
 		static inline auto norm_t(const T1& x) ONIKA_AUTO_RET( sqrt(norm2_t(x)) )
+		static inline auto distance2_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( norm2_t(sub_tt(x,y)) )
+		static inline auto distance_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( sqrt(distance2_tt(x,y)) )
+		*/
+#undef MT
+#undef TA
+#undef TG
+
 	};
 
 } }

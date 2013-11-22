@@ -1,7 +1,6 @@
 #include "onika/tuple.h"
 #include <iostream>
 #include <functional>
-#include "onika/mathfunc.h"
 
 struct AddOne
 {
