@@ -24,6 +24,9 @@ int main()
 	std::cout<< t2 <<"\n";
 	std::cout<< t3 <<"\n";
 	std::cout<< t4 <<"\n";
+
+	std::cout<< sub(3.2,1.5) <<"\n";
+	std::cout<< distance2(1.5,3.5) <<"\n";
 	return 0;
 }
 
