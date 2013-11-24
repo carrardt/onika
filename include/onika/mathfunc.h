@@ -165,14 +165,14 @@ namespace onika { namespace math {
 	MATH_FUNC1(abs)
 #undef 	MATH_FUNC1
 #define MATH_FUNC2(name) \
-	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( TA( PTMI::name##_tt(x,y) , name(TG(x,I),TG(y,I)) ) \
+	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( TA( PTMI::name##_tt(x,y) , name(TG(x,I),TG(y,I)) ) ) \
 	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( TA( PTMI::name##_ts(x,y) , name(TG(x,I),y) ) )
 	MATH_FUNC2(sub)
 	MATH_FUNC2(add)
 	MATH_FUNC2(mul)
 	MATH_FUNC2(div)
 #undef 	MATH_FUNC2
-	static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( add( TMI<I-1>::dot_tt(x,y) , mul(TG(x,I),TG(y,I)) ) )
+	static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( add( PTMI::dot_tt(x,y) , mul(TG(x,I),TG(y,I)) ) )
 	};
 	template <class T1, class T2>
 	struct TMI<T1,T2,0>
@@ -183,7 +183,7 @@ namespace onika { namespace math {
 	MATH_FUNC1(abs)
 #undef 	MATH_FUNC1
 #define MATH_FUNC2(name) \
-	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( name(TG(x,0),TG(y,0)) ) \
+	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( name(TG(x,0),TG(y,0)) ) ) \
 	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( name(TG(x,0),y) ) )
 	MATH_FUNC2(sub)
 	MATH_FUNC2(add)
@@ -202,8 +202,8 @@ namespace onika { namespace math {
 #undef 	MATH_FUNC1
 
 #define MATH_FUNC2(name) \
-	static inline auto name##_tt(const T1& x,const T2& x) ONIKA_AUTO_RET( TMI<T1,T2>::name##_tt(x,y) ) \
-	static inline auto name##_ts(const T1& x,const T2& x) ONIKA_AUTO_RET( TMI<T1,T2>::name##_ts(x,y) )
+	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( TMI<T1,T2>::name##_tt(x,y) ) \
+	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( TMI<T1,T2>::name##_ts(x,y) )
 	MATH_FUNC2(sub)
 	MATH_FUNC2(add)
 	MATH_FUNC2(mul)
