@@ -110,13 +110,13 @@ namespace onika { namespace math {
 	template <class... T> struct UnaryFunc< std::tuple<T...> >
 	{
 #define MATH_FUNC1(name) \
-		static inline auto name##_selector(const std::tuple<T...>& x) ONIKA_AUTO_RET( TMI<T>::name##_t(x) )
+		static inline auto name##_selector(const std::tuple<T...>& x) ONIKA_AUTO_RET( TMI<std::tuple<T...> >::name##_t(x) )
 		MATH_FUNC1(negate)
 		MATH_FUNC1(inverse)
 		MATH_FUNC1(abs)
 #undef MATH_FUNC1
-		static inline auto norm2_t(const std::tuple<T...>& x) ONIKA_AUTO_RET( onika::math::dot(x,x) )
-		static inline auto norm_t(const std::tuple<T...>& x) ONIKA_AUTO_RET( std::sqrt(onika::math::norm2(x)) )
+		static inline auto norm2_selector(const std::tuple<T...>& x) ONIKA_AUTO_RET( onika::math::dot(x,x) )
+		static inline auto norm_selector(const std::tuple<T...>& x) ONIKA_AUTO_RET( std::sqrt(onika::math::norm2(x)) )
 	};
 
 
@@ -177,10 +177,10 @@ namespace onika { namespace math {
 #undef 	MATH_FUNC2
 
 	static inline auto distance2_eqtuple(const T1& x,const T2& y)
-	ONIKA_AUTO_RET( onika::math::norm2(onika::math::sub(x,y)) )
+	ONIKA_AUTO_RET( UnaryFunc<decltype(sub_eqtuple(x,y))>::norm2_selector( sub_eqtuple(x,y) ) )
 
 	static inline auto distance_eqtuple(const T1& x,const T2& y)
-	ONIKA_AUTO_RET( std::sqrt(onika::math::distance2(x,y)) )
+	ONIKA_AUTO_RET( std::sqrt(distance2_eqtuple(x,y)) )
 	};
 
 	// both operands are tuples and have the same size
