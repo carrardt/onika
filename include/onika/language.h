@@ -5,8 +5,8 @@
 #include <tuple>
 
 
-#define ONIKA_AUTO_RET(expr) -> decltype(expr) { return expr; }
-#define ONIKA_MAKE_SIGNED(T) typename onika::language::MakeSigned<T>::type
+#define ONIKA_AUTO_RET(E...) -> decltype(E) { return E; }
+#define ONIKA_MAKE_SIGNED(T...) typename onika::language::MakeSigned<T>::type
 
 namespace onika { namespace language {
 
