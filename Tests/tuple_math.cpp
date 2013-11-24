@@ -15,8 +15,15 @@ inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t 
 
 int main()
 {
-	auto t1 = MT(1.1f,2.2,3u);
+	auto t1 = MT(1.1f,2.2,-3);
+	auto t2 = inverse(t1);
+	auto t3 = abs(t1);
+	auto t4 = negate(t1);
+
 	std::cout<< t1 <<"\n";
+	std::cout<< t2 <<"\n";
+	std::cout<< t3 <<"\n";
+	std::cout<< t4 <<"\n";
 	return 0;
 }
 

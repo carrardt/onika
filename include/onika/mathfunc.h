@@ -26,22 +26,22 @@ namespace onika { namespace math {
 
 	// definition of math functions on simple scalars
 #define MATH_FUNC1(name,code) \
-	template<class T> static inline auto name##_s(const T& x) ONIKA_AUTO_RET( code )
-#define MATH_FUNC2(name,code) \
-	template<class T1,class T2> static inline auto name##_ss(const T1& x, const T2& y) ONIKA_AUTO_RET( code )
-	MATH_FUNC1(negate,(-x))
-	MATH_FUNC1(inverse,(1/x))
-	MATH_FUNC1(abs,((x>=0)?x:-x))
-	MATH_FUNC1(norm,((x>=0)?x:-x))
-	MATH_FUNC1(norm2,(x*x))
-	MATH_FUNC2(sub,(x-y))
-	MATH_FUNC2(add,(x+y))
-	MATH_FUNC2(mul,(x*y))
-	MATH_FUNC2(div,(x/y))
-	MATH_FUNC2(dot,(x*y))
-	MATH_FUNC2(distance,(((y-x)>=0)?(y-x):(x-y)))
-	MATH_FUNC2(distance2,((y-x)*(y-x)))
+		template<class T> static inline auto name##_s(const T& x) ONIKA_AUTO_RET( code )
+		MATH_FUNC1(negate,(-x))
+		MATH_FUNC1(inverse,(1/x))
+		MATH_FUNC1(abs,std::abs(x))
+		MATH_FUNC1(norm,std::abs(x))
+		MATH_FUNC1(norm2,(x*x))
 #undef 	MATH_FUNC1
+#define MATH_FUNC2(name,code) \
+		template<class T1,class T2> static inline auto name##_ss(const T1& x, const T2& y) ONIKA_AUTO_RET( code )
+		MATH_FUNC2(sub,(x-y))
+		MATH_FUNC2(add,(x+y))
+		MATH_FUNC2(mul,(x*y))
+		MATH_FUNC2(div,(x/y))
+		MATH_FUNC2(dot,(x*y))
+		MATH_FUNC2(distance,std::abs(y-x))
+		MATH_FUNC2(distance2,(y-x)*(y-x))
 #undef 	MATH_FUNC2
 
 	template<class T1, class T2=T1> struct TupleMath;
@@ -56,8 +56,8 @@ namespace onika { namespace math {
 		MATH_FUNC1(negate)
 		MATH_FUNC1(inverse)
 		MATH_FUNC1(abs)
-		MATH_FUNC1(norm)
-		MATH_FUNC1(norm2)
+//		MATH_FUNC1(norm)
+//		MATH_FUNC1(norm2)
 #undef MATH_FUNC1
 	};
 
@@ -69,14 +69,14 @@ namespace onika { namespace math {
 		MATH_FUNC1(negate)
 		MATH_FUNC1(inverse)
 		MATH_FUNC1(abs)
-		MATH_FUNC1(norm)
-		MATH_FUNC1(norm2)
+//		MATH_FUNC1(norm)
+//		MATH_FUNC1(norm2)
 #undef MATH_FUNC1		
 	};
 
 	template<class T> struct TupleLength { static constexpr int value=-1; };
 	template<class... T> struct TupleLength< std::tuple<T...> > { static constexpr int value=sizeof...(T); };
-	
+	/*
 	// a partir d'ici c'est important de bien specifier le comprtement tuple/non tuple pour les opérateurs binaires
 	template <class T1
 		 ,class T2
@@ -92,14 +92,14 @@ namespace onika { namespace math {
 	template <class T1, class T2> struct BinaryFunc<T1,T2,false,false,true>
 	{
 #define MATH_FUNC2(name) \
-	static inline auto name(const T1& x, const T2& y) ONIKA_AUTO_RET( name##_ss(x,y) )
-	MATH_FUNC2(sub)
-	MATH_FUNC2(add)
-	MATH_FUNC2(mul)
-	MATH_FUNC2(div)
-	MATH_FUNC2(dot)
-	MATH_FUNC2(distance)
-	MATH_FUNC2(distance2)
+		static inline auto name(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::name##_ss(x,y) )
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
+		MATH_FUNC2(dot)
+		MATH_FUNC2(distance)
+		MATH_FUNC2(distance2)
 #undef 	MATH_FUNC2
 	};
 
@@ -107,10 +107,10 @@ namespace onika { namespace math {
 	template <class T1, class T2> struct BinaryFunc<T1,T2,true,false,false>
 	{
 #define MATH_FUNC2(name) static inline auto name(const T1& x, const T2& y) ONIKA_AUTO_RET( TupleMath<T1,T2>::name##_ts(x,y) )
-	MATH_FUNC2(sub)
-	MATH_FUNC2(add)
-	MATH_FUNC2(mul)
-	MATH_FUNC2(div)
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
 #undef 	MATH_FUNC2
 	};
 
@@ -127,16 +127,17 @@ namespace onika { namespace math {
 	MATH_FUNC2(distance)
 #undef 	MATH_FUNC2
 	};
-
+*/
 // front-end methods definition
 #define MATH_FUNC1(name) \
 	template <class T> static inline auto name(const T& x) ONIKA_AUTO_RET( UnaryFunc<T>::name(x) )
 	MATH_FUNC1(negate)
 	MATH_FUNC1(inverse)
 	MATH_FUNC1(abs)
-	MATH_FUNC1(norm)
-	MATH_FUNC1(norm2)
+//	MATH_FUNC1(norm)
+//	MATH_FUNC1(norm2)
 #undef 	MATH_FUNC1
+	/*
 #define MATH_FUNC2(name) \
 	template <class T1, class T2> static inline auto name(const T1& x, const T2& y) ONIKA_AUTO_RET( BinaryFunc<T1,T2>::name(x,y) )
 	MATH_FUNC2(sub)
@@ -147,7 +148,7 @@ namespace onika { namespace math {
 	MATH_FUNC2(distance)
 	MATH_FUNC2(distance2)
 #undef 	MATH_FUNC2
-
+*/
 
 #define MT(x) std::make_tuple(x)
 #define TA(x,y) std::tuple_cat(x,MT(y))
@@ -159,38 +160,57 @@ namespace onika { namespace math {
 	template <class T1, class T2=T1,unsigned int I=TS(T1)-1>
 	struct TMI
 	{
-#define MATH_FUNC1(name) static inline auto name##_t(const T1& x) ONIKA_AUTO_RET( TA( PTMI::name##_t(x) , name(TG(x,I)) ) )
-	MATH_FUNC1(negate)
-	MATH_FUNC1(inverse)
-	MATH_FUNC1(abs)
+#define MATH_FUNC1(name) static inline auto name##_t(const T1& x) ONIKA_AUTO_RET( TA( PTMI::name##_t(x) , onika::math::name(TG(x,I)) ) )
+		MATH_FUNC1(negate)
+		MATH_FUNC1(inverse)
+		MATH_FUNC1(abs)
 #undef 	MATH_FUNC1
+		/*
 #define MATH_FUNC2(name) \
-	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( TA( PTMI::name##_tt(x,y) , name(TG(x,I),TG(y,I)) ) ) \
-	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( TA( PTMI::name##_ts(x,y) , name(TG(x,I),y) ) )
-	MATH_FUNC2(sub)
-	MATH_FUNC2(add)
-	MATH_FUNC2(mul)
-	MATH_FUNC2(div)
+		static inline auto name##_tt(const T1& x,const T2& y) \
+		ONIKA_AUTO_RET( TA( PTMI::name##_tt(x,y) , onika::math::name(TG(x,I),TG(y,I)) ) )
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
 #undef 	MATH_FUNC2
-	static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( add( PTMI::dot_tt(x,y) , mul(TG(x,I),TG(y,I)) ) )
+#define MATH_FUNC2(name) \
+		static inline auto name##_ts(const T1& x,const T2& y) \
+		ONIKA_AUTO_RET( TA( PTMI::name##_ts(x,y) , onika::math::name(TG(x,I),y) ) )
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
+#undef 	MATH_FUNC2
+*/
+//	static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::add( PTMI::dot_tt(x,y) , onika::math::mul(TG(x,I),TG(y,I)) ) )
 	};
+
 	template <class T1, class T2>
 	struct TMI<T1,T2,0>
 	{
-#define MATH_FUNC1(name) static inline auto name##_t(const T1& x) ONIKA_AUTO_RET( MT(name(TG(x,0))) )
-	MATH_FUNC1(negate)
-	MATH_FUNC1(inverse)
-	MATH_FUNC1(abs)
+#define MATH_FUNC1(name) static inline auto name##_t(const T1& x) ONIKA_AUTO_RET( MT(onika::math::name(TG(x,0))) )
+		MATH_FUNC1(negate)
+		MATH_FUNC1(inverse)
+		MATH_FUNC1(abs)
 #undef 	MATH_FUNC1
+		/*
 #define MATH_FUNC2(name) \
-	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( name(TG(x,0),TG(y,0)) ) ) \
-	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( name(TG(x,0),y) ) )
-	MATH_FUNC2(sub)
-	MATH_FUNC2(add)
-	MATH_FUNC2(mul)
-	MATH_FUNC2(div)
+		static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( onika::math::name(TG(x,0),TG(y,0)) ) )
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
 #undef 	MATH_FUNC2
-	static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( mul(TG(x,0),TG(y,0)) )
+#define MATH_FUNC2(name) \
+		static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( MT( onika::math::name(TG(x,0),y) ) )
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
+#undef 	MATH_FUNC2
+*/
+//		static inline auto dot_tt(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::mul(TG(x,0),TG(y,0)) )
 	};
 
 	template <class T1, class T2> struct TupleMath
@@ -200,7 +220,7 @@ namespace onika { namespace math {
 	MATH_FUNC1(inverse)
 	MATH_FUNC1(abs)
 #undef 	MATH_FUNC1
-
+/*
 #define MATH_FUNC2(name) \
 	static inline auto name##_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( TMI<T1,T2>::name##_tt(x,y) ) \
 	static inline auto name##_ts(const T1& x,const T2& y) ONIKA_AUTO_RET( TMI<T1,T2>::name##_ts(x,y) )
@@ -215,6 +235,7 @@ namespace onika { namespace math {
 	static inline auto norm_t(const T1& x) ONIKA_AUTO_RET( std::sqrt(norm2_t(x)) )
 	static inline auto distance2_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( norm2_t(sub_tt(x,y)) )
 	static inline auto distance_tt(const T1& x,const T2& y) ONIKA_AUTO_RET( std::sqrt(distance2_tt(x,y)) )
+	*/
 	};
 #undef MT
 #undef TA
@@ -228,7 +249,8 @@ namespace onika { namespace math {
 #define ONIKA_USE_MATH \
 using onika::math::negate; \
 using onika::math::inverse; \
-using onika::math::abs; \
+using onika::math::abs
+/*
 using onika::math::norm2; \
 using onika::math::norm; \
 using onika::math::sub; \
@@ -238,7 +260,7 @@ using onika::math::div; \
 using onika::math::dot; \
 using onika::math::distance2; \
 using onika::math::distance
-
+*/
 
 #endif
 
