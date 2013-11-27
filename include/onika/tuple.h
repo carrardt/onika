@@ -7,6 +7,8 @@
 #include <tuple>
 #include <type_traits>
 #include "onika/language.h"
+
+// only for operator <<
 #include <iostream>
 
 namespace onika { namespace tuple {
