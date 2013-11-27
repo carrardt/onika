@@ -7,6 +7,7 @@
 #include <tuple>
 #include <type_traits>
 #include "onika/language.h"
+#include <iostream>
 
 namespace onika { namespace tuple {
 

@@ -27,6 +27,11 @@ int main()
 
 	std::cout<< sub(3.2,1.5) <<"\n";
 	std::cout<< distance2(1.5,3.5) <<"\n";
+	std::cout<< sub(t1,t3) <<"\n";
+	std::cout<< add(t1,t4) <<"\n";
+
+	std::cout<< distance(t1,t4) <<"\n";
+
 	return 0;
 }
 

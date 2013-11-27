@@ -91,8 +91,6 @@ namespace onika { namespace math {
 			MATH_FUNC2(distance2,(y-x)*(y-x))
 	#undef 	MATH_FUNC2
 
-
-
 	// macros for tuple handling
 #define MT(x...) std::make_tuple(x)
 #define TA(x,y) std::tuple_cat(x,MT(y))
@@ -114,9 +112,6 @@ namespace onika { namespace math {
 	MATH_FUNC1(inverse)
 	MATH_FUNC1(abs)
 #undef MATH_FUNC1
-	template <class T> struct Cnorm2T { static inline auto norm2T(const T& x) ONIKA_AUTO_RET( CdotTT<T,T>::dotTT(x,x) ) };
-	template <class T> struct CnormT { static inline auto normT(const T& x) ONIKA_AUTO_RET( std::sqrt(Cnorm2T<T>::norm2T(x)) ) };
-
 
 	//==========================================================
 	//== Tuple/Tuple versions of binary functions             ==
@@ -131,14 +126,19 @@ namespace onika { namespace math {
         MATH_FUNC2(mul)
         MATH_FUNC2(div)
 #undef MATH_FUNC2
-	template <class T1,class T2,unsigned int I> struct CdotTT
+
+    template <class T1,class T2,unsigned int I> struct CdotTT
 	{ static inline auto dotTT(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::add( CdotTT<T1,T2,I-1>::dotTT(x,y) , onika::math::dot(TG(x,I),TG(y,I)) )  ) };
 	template <class T1,class T2> struct CdotTT<T1,T2,0>
 	{ static inline auto dotTT(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::dot(TG(x,0),TG(y,0)) ) };
+
+	template <class T> struct Cnorm2T { static inline auto norm2T(const T& x) ONIKA_AUTO_RET( CdotTT<T,T>::dotTT(x,x) ) };
+	template <class T> struct CnormT { static inline auto normT(const T& x) ONIKA_AUTO_RET( std::sqrt(Cnorm2T<T>::norm2T(x)) ) };
+
 	template <class T1,class T2> struct Cdistance2TT
-	{ static inline auto distance2TT(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::norm2( onika::math::sub(y,x) ) ) };
+	{ static inline auto distance2TT(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::norm2( CsubTT<T1,T2>::subTT(x,y) ) ) };
 	template <class T1,class T2> struct CdistanceTT
-	{ static inline auto distanceTT(const T1& x, const T2& y) ONIKA_AUTO_RET( std::sqrt( Cdistance2TT<T1,T2>::distance2TT(x,y) ) ) };
+	{ static inline auto distanceTT(const T1& x, const T2& y) ONIKA_AUTO_RET( onika::math::norm( CsubTT<T1,T2>::subTT(x,y) ) ) };
 
 
 	//==========================================================
@@ -203,7 +203,6 @@ namespace onika { namespace math {
 		MATH_FUNC2(add)
 		MATH_FUNC2(mul)
 #undef 	MATH_FUNC2
-	};
 
 	// first operand is a tuple and second is not
 #define MATH_FUNC2(name) \
@@ -229,6 +228,8 @@ namespace onika { namespace math {
 		MATH_FUNC2(mul)
 		MATH_FUNC2(div)
 		MATH_FUNC2(dot)
+		MATH_FUNC2(distance)
+		MATH_FUNC2(distance2)
 #undef 	MATH_FUNC2
 
 #undef MT

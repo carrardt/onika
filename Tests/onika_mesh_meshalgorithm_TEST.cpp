@@ -14,7 +14,6 @@
 #include "onika/tuple.h"
 
 ONIKA_USE_MATH;
-ONIKA_USE_TUPLE_MATH;
 ONIKA_USE_TUPLE_OSTREAM
 
 struct Mesh
