@@ -90,7 +90,6 @@ typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> MyC2EBasicTraits;
 
 //onika::mesh::CellMinEdgeLengthCompare<>
 ONIKA_USE_MATH;
-ONIKA_USE_TUPLE_MATH;
 
 int main(int argc, char* argv[])
 {

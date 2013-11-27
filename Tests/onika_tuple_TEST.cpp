@@ -38,7 +38,7 @@ int main()
 	std::cout<<"x="<<x<<", y="<<y<<", z="<<z<<", w[9]="<<w[9]<<"\n";
 	std::cout<<"t1="<< t1 <<"\n";
 	std::cout<<"t2="<< t2 <<"\n";
-	std::cout<<"zipseq="<<zipseq <<"\n";
+	//std::cout<<"zipseq="<<zipseq <<"\n";
 	std::cout<<"ziprep="<<ziprep <<"\n";
 	std::cout<<"\n";	
 	

@@ -204,15 +204,22 @@ namespace onika { namespace tuple {
 	// =============== print ==================
 	// ========================================
 
-	template<class StreamT>
-	struct PrintTupleOp
-	{
-		inline PrintTupleOp(StreamT& s) : out(s) {}
-		template<class T> inline StreamT& operator () ( const T& x) const { out<< x << ','; return out;}
-		StreamT& out;
-	};
+	template<class StreamT> struct PrintTupleOp;
+	template<class T> struct PrintTuple;
 
-	template<class T> struct PrintTuple {};
+	template<class StreamT, class... T>
+	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
+
+	template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
+	{
+		onika::tuple::print( out, t ); return out;
+	}
+
+	template<class T> struct PrintTuple
+	{
+		template<class StreamT>
+		static inline StreamT& print( StreamT& out, const T& x ) { out << x; return out; }
+	};
 
 	template<> struct PrintTuple< std::tuple<> >
 	{
@@ -242,13 +249,23 @@ namespace onika { namespace tuple {
 		}
 	};
 
-	template<class StreamT, class... T>
-	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
-	
+	template<class StreamT>
+	struct PrintTupleOp
+	{
+		inline PrintTupleOp(StreamT& s) : out(s) {}
+		template<class T> inline StreamT& operator () ( const T& x) const
+		{
+			PrintTuple<T>::print(out,x);
+			out<< ',';
+			return out;
+		}
+		StreamT& out;
+	};
+
 } }
 
 #define ONIKA_USE_TUPLE_OSTREAM \
-template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
+using onika::tuple::operator <<;
 
 // ==========================================================
 // ======================== UNIT TEST =======================
