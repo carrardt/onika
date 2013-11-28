@@ -6,21 +6,7 @@
 #include <numeric>
 
 #include "onika/language.h"
-
-
-// extends definition of what an arithmetic type is to tuples. in particular tuple of arithmetics are arithmetic
-namespace std
-{
-	template<class T>
-	class is_arithmetic< std::tuple<T> > : public std::is_arithmetic<T> {};
-
-	template<class T, class... Types>
-	class is_arithmetic< std::tuple<T,Types...> > : public std::integral_constant<bool,
-		   is_arithmetic<T>::value
-		&& is_arithmetic<std::tuple<Types...> >::value
-		> {};
-}
-
+#include "onika/tuple.h"
 
 namespace onika { namespace math {
 

@@ -34,7 +34,7 @@ typedef std::vector< std::tuple<
 namespace onika { namespace mesh {
 template<class IdType>
 inline auto vertexDistance( const MyVertexContainer& vertices, IdType a, IdType b )
-ONIKA_AUTO_RET(   onika::math::distance( std::get<1>(vertices[a]), std::get<1>(vertices[b]) )   )
+ONIKA_AUTO_RET(   onika::math::distance( std::get<0>(vertices[a]), std::get<0>(vertices[b]) )   )
 } }
 
 int main()
@@ -57,7 +57,10 @@ int main()
 		int i = std::get<0>( element );
 		std::cout<< "zip["<<i<<"] = "<<element << "\n";
 	}
-	//std::cout<<"distance between 5 and 7 : "<< distance( c1[5], c1[7] )<<"\n";
+
+	std::cout<< onika::math::negate( c1[5] ) << "\n";
+
+	std::cout<<"distance between 5 and 7 : "<< onika::math::distance( c1[5], c1[7] )<<"\n";
 
 	MyVertexContainer vertices(10);
 	for(int i=0;i<10;i++)
@@ -71,7 +74,7 @@ int main()
 	{
 		std::cout<< "vertices["<<i<<"] = "<<vertices[i] << "\n";
 	}
-	//std::cout<<"distance between 5 and 7 : "<< onika::mesh::vertexDistance(vertices,5,7) <<"\n";
+	std::cout<<"distance between 5 and 7 : "<< onika::mesh::vertexDistance(vertices,5,7) <<"\n";
 	
 	return 0;
 }

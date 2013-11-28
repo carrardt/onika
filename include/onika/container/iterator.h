@@ -7,6 +7,7 @@
 #include <type_traits>
 #include "onika/debug/dbgassert.h"
 #include "onika/language.h"
+#include "onika/mathfunc.h"
 
 namespace onika { namespace container {
 
@@ -262,35 +263,45 @@ namespace std
 // ====== MATH SPECIALIZATION FOR CONTAINER ACCESSORS =======
 // ==========================================================
 namespace onika { namespace math {
-#define _MATH_FUNC1(name,AccT) \
-template<class T>\
-inline auto name(container::AccT<T,true> x) \
-ONIKA_AUTO_RET( name(x.get()) ) 
 
-#define MATH_FUNC1(name) \
-_MATH_FUNC1(name,ElementAccessorT) \
-_MATH_FUNC1(name,ConstElementAccessorT) 
+#define _MATH_FUNC1(name,AccT) \
+	template <class T> struct C##name##X<onika::container::AccT<T> > \
+	{ static inline auto name##X(onika::container::AccT<T> x) ONIKA_AUTO_RET( onika::math::name(x.get()) ) };
 
 #define _MATH_FUNC2(name,AccT1,AccT2) \
-template<class T1, class T2> \
-inline auto name(container::AccT1<T1,true> x, container::AccT2<T2,true> y) \
-ONIKA_AUTO_RET( name(x.get(),y.get()) )
+	template <class T1,class T2> struct C##name##XX<onika::container::AccT1<T1>,onika::container::AccT2<T2> > \
+	{ static inline auto name##XX(onika::container::AccT1<T1> x, onika::container::AccT2<T2> y) \
+	ONIKA_AUTO_RET( onika::math::name(x.get(),y.get()) ) };
+
+#define MATH_FUNC1(name) \
+	_MATH_FUNC1(name,ElementAccessorT) \
+	_MATH_FUNC1(name,ConstElementAccessorT)
 
 #define MATH_FUNC2(name) \
-_MATH_FUNC2(name,ElementAccessorT,ElementAccessorT) \
-_MATH_FUNC2(name,ElementAccessorT,ConstElementAccessorT) \
-_MATH_FUNC2(name,ConstElementAccessorT,ElementAccessorT) \
-_MATH_FUNC2(name,ConstElementAccessorT,ConstElementAccessorT)
+	_MATH_FUNC2(name,ElementAccessorT,ElementAccessorT) \
+	_MATH_FUNC2(name,ElementAccessorT,ConstElementAccessorT) \
+	_MATH_FUNC2(name,ConstElementAccessorT,ElementAccessorT) \
+	_MATH_FUNC2(name,ConstElementAccessorT,ConstElementAccessorT)
 
-// MATH_FUNC1(abs)
-MATH_FUNC1(norm)
-MATH_FUNC1(norm2)
-MATH_FUNC2(dot)
-MATH_FUNC2(distance)
-MATH_FUNC2(distance2)
+	MATH_FUNC1(negate)
+	MATH_FUNC1(inverse)
+	MATH_FUNC1(abs)
+	MATH_FUNC1(norm)
+	MATH_FUNC1(norm2)
+
+	MATH_FUNC2(sub)
+	MATH_FUNC2(add)
+	MATH_FUNC2(mul)
+	MATH_FUNC2(div)
+	MATH_FUNC2(dot)
+	MATH_FUNC2(distance)
+	MATH_FUNC2(distance2)
 
 #undef MATH_FUNC1
+#undef _MATH_FUNC1
 #undef MATH_FUNC2
+#undef _MATH_FUNC2
+
 } }
 
 #endif // end of iterator.h
