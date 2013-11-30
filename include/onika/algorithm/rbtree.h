@@ -5,19 +5,27 @@
 #include <vector>
 #include <functional>   // std::less
 #include "onika/language.h"
+#include "onika/debug/dbgmessage.h"
 
 namespace onika { namespace algorithm {
 
 // TODO: add tree_traits
-template<class _ContainerType>
+template<class _ContainerType, bool valid =
+		std::is_same< typename std::tuple_element<1,typename _ContainerType::value_type>::type ,
+				      typename std::tuple_element<2,typename _ContainerType::value_type>::type >::value >
 struct TupleVectorBTree
 {
+};
+
+template<class _ContainerType>
+struct TupleVectorBTree<_ContainerType,true>
+{
 	typedef _ContainerType ContainerType;
-	typedef size_t NodePtr; // position of node description in container
 	typedef typename ContainerType::value_type Node;
 	typedef typename std::tuple_element<0,Node>::type ValueType;
 	typedef typename std::tuple_element<1,Node>::type LeftPtrType;
 	typedef typename std::tuple_element<2,Node>::type RightPtrType;
+	typedef LeftPtrType NodePtr; // position of node description in container
 
 	static constexpr unsigned int TupleSize = 3;
 	static constexpr NodePtr NullPtr = (static_cast<NodePtr>(0) - 1) >> 1;
@@ -71,7 +79,7 @@ struct TupleVectorBTree
 template<class _ContainerType>
 struct TupleVectorPTree : public TupleVectorBTree<_ContainerType>
 {
-	typedef size_t NodePtr; // position of node description in container
+	typedef typename TupleVectorBTree<_ContainerType>::NodePtr NodePtr; // position of node description in container
 	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type CountType;
 	static constexpr unsigned int TupleSize = 4;
 
@@ -102,17 +110,22 @@ struct NodeRefT
 
 	inline NodeRefT insert(const ValueType& x)
 	{
+		debug::dbgmessage() << "insert("<<this->self<<","<<x<<")\n";
 		if( this->self == NullPtr )
 		{
+//			debug::dbgmessage() << "found a place for insertion\n";
 			this->self = this->tree.addNode();
 			this->setValue( x );
+//			debug::dbgmessage() << "Insert "<<x<<" @"<<this->self<<"\n";
 		}
 		else if( this->tree.compare( x, this->getValue() ) )
 		{
+//			debug::dbgmessage() << "left of @"<<this->self<<" (x="<<x<<",cur="<<this->getValue()<<") toward @"<<this->getLeft().self<<"\n";
 			this->setLeft( this->getLeft().insert(x) );
 		}
 		else
 		{
+//			debug::dbgmessage() << "right of @"<<this->self<<" (x="<<x<<",cur="<<this->getValue()<<") toward @"<<this->getRight().self<<"\n";
 			this->setRight( this->getRight().insert(x) );
 		}
 		return *this;
