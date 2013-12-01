@@ -76,15 +76,16 @@ struct TupleVectorBTree<_ContainerType,true>
 	NodePtr freelist;
 };
 
+// a tree storage that holds an additional information on every node
 template<class _ContainerType>
-struct TupleVectorPTree : public TupleVectorBTree<_ContainerType>
+struct TupleVectorTaggedBTree : public TupleVectorBTree<_ContainerType>
 {
 	typedef typename TupleVectorBTree<_ContainerType>::NodePtr NodePtr; // position of node description in container
-	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type CountType;
+	typedef typename std::tuple_element<3,typename _ContainerType::value_type>::type TagType;
 	static constexpr unsigned int TupleSize = 4;
 
-	inline CountType getCount(NodePtr i) { return std::get<3>(this->data[i]) ; }
-	inline void setCount(NodePtr i, CountType x) { std::get<3>(this->data[i]) = x; }
+	inline TagType getTag(NodePtr i) { return std::get<3>(this->data[i]) ; }
+	inline void setTag(NodePtr i,const TagType& x) { std::get<3>(this->data[i]) = x; }
 };
 
 template<class Tree>
@@ -132,20 +133,21 @@ struct NodeRefT
 	}
 };
 
+// node accessor for tagged BTrees where tag is an integer holding total number of nodes in it's left subtree
 template<class Tree>
 struct PNodeRefT : public NodeRefT<Tree>
 {
 	typedef typename Tree::NodePtr NodePtr;
 	typedef typename Tree::ValueType ValueType;
-	typedef typename Tree::CountType CountType;
+	typedef typename Tree::TagType TagType;
 	static constexpr NodePtr NullPtr = Tree::NullPtr;
 
-	inline PNodeRefT(Tree& t, NodePtr s, NodePtr p, NodePtr gp, CountType tc=0)
+	inline PNodeRefT(Tree& t, NodePtr s, NodePtr p, NodePtr gp, TagType tc=0)
 		: NodeRefT<Tree>(t,s,p,gp)
 		, traversalCount(tc)
 		{}
 
-	inline PNodeRefT(Tree& t, CountType tc=0)
+	inline PNodeRefT(Tree& t, TagType tc=0)
 		: NodeRefT<Tree>(t,this->tree.addNode(),NullPtr,NullPtr)
 		, traversalCount(tc)
 		{}
@@ -160,19 +162,19 @@ struct PNodeRefT : public NodeRefT<Tree>
 		return PNodeRefT( this->tree , this->tree.getRight(this->self), this->self, this->parent, this->getPosition()+1 );
 	}
 
-	inline CountType getCount() const
+	inline TagType getLeftCount() const
 	{
-		return this->tree.getCount(this->self);
+		return this->tree.getTag(this->self);
 	}
 
-	inline void setCount(CountType n) const
+	inline void setLeftCount(TagType n) const
 	{
-		return this->tree.setCount(this->self, n);
+		return this->tree.setTag(this->self, n);
 	}
 
-	inline CountType getPosition() const
+	inline TagType getPosition() const
 	{
-		return traversalCount + getCount();
+		return traversalCount + getLeftCount();
 	}
 
 	inline void setLeft (PNodeRefT x) 	 { this->tree.setLeft(this->self,x.self); }
@@ -186,13 +188,13 @@ struct PNodeRefT : public NodeRefT<Tree>
 		{
 			this->self = this->tree.addNode();
 			this->setValue( x );
-			this->setCount( 0 );
+			this->setLeftCount( 0 );
 		}
 		else if( this->tree.compare( x, this->getValue() ) )
 		{
 			this->setLeft( this->getLeft().insert(x) );
 			// we have inserted one node somwhere inside the left sub-tree, thus left count inrease by 1
-			this->setCount( this->getCount() + 1 );
+			this->setLeftCount( this->getLeftCount() + 1 );
 		}
 		else
 		{
@@ -202,8 +204,81 @@ struct PNodeRefT : public NodeRefT<Tree>
 	}
 
 	// count of all nodes on the left of the left-most child of this node's subtree
-	CountType traversalCount; 	
+	TagType traversalCount;
 };
+
+// node accessor for tagged BTrees where tag is an integer holding total number of nodes in it's left subtree
+template<class Tree>
+struct RBNodeRefT : public NodeRefT<Tree>
+{
+	typedef typename Tree::NodePtr NodePtr;
+	typedef typename Tree::ValueType ValueType;
+	typedef typename Tree::TagType TagType;
+	static constexpr NodePtr NullPtr = Tree::NullPtr;
+	static constexpr bool Black=0;
+	static constexpr bool Red=1;
+
+	inline RBNodeRefT(Tree& t, NodePtr s, NodePtr p, NodePtr gp)
+		: NodeRefT<Tree>(t,s,p,gp)
+		{}
+
+	inline RBNodeRefT(Tree& t)
+		: NodeRefT<Tree>(t,this->tree.addNode(),NullPtr,NullPtr)
+		{}
+
+	inline RBNodeRefT getLeft () const
+	{
+		return RBNodeRefT( this->tree , this->tree.getLeft(this->self), this->self, this->parent );
+	}
+
+	inline RBNodeRefT getRight() const
+	{
+		return RBNodeRefT( this->tree , this->tree.getRight(this->self), this->self, this->parent );
+	}
+
+	inline TagType getColor() const
+	{
+		return this->tree.getTag(this->self);
+	}
+
+	inline const char* getColorString() const
+	{
+		return ( this->tree.getTag(this->self) == Black ) ? "Black" : "Red";
+	}
+
+	inline void setColor(TagType n) const
+	{
+		return this->tree.setTag(this->self, n);
+	}
+
+	inline void setLeft (RBNodeRefT x) 	 { this->tree.setLeft(this->self,x.self); }
+	inline void setRight(RBNodeRefT x) 	 { this->tree.setRight(this->self,x.self); }
+	inline void setValue(const ValueType& x) { this->tree.setValue(this->self,x); }
+
+	// returns sub-tree size increase
+	inline RBNodeRefT insert(const ValueType& x)
+	{
+		if( this->self == NullPtr )
+		{
+			this->self = this->tree.addNode();
+			this->setValue( x );
+			this->setColor( Black );
+		}
+		else if( this->tree.compare( x, this->getValue() ) )
+		{
+			this->setLeft( this->getLeft().insert(x) );
+			// we have inserted one node somwhere inside the left sub-tree, thus left count inrease by 1
+			this->setColor( Red );
+		}
+		else
+		{
+			this->setRight( this->getRight().insert(x) );
+		}
+		return *this;
+	}
+
+};
+
 
 template<class BTreeBase, class _ValueCompare, template<typename> class _BTreeNodeRef=NodeRefT>
 struct BTree : public BTreeBase
@@ -254,7 +329,6 @@ void probe_btree_depth(NodeRef node, unsigned int& minDepth, unsigned int &maxDe
 	maxDepth = 0;
 	probe_btree_depth( node, 0, minDepth, maxDepth );
 }
-
 
 } } // end of namespace
 

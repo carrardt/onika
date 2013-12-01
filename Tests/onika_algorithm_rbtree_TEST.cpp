@@ -10,7 +10,7 @@ typedef onika::algorithm::BTree< SimpleTreeBase, std::less<double> > SimpleTree;
 typedef typename SimpleTree::NodeRef NodeRef;
 
 // positional binary tree
-typedef onika::algorithm::TupleVectorPTree< std::vector< std::tuple<double,size_t,size_t,size_t> > > PTreeBase;
+typedef onika::algorithm::TupleVectorTaggedBTree< std::vector< std::tuple<double,size_t,size_t,size_t> > > PTreeBase;
 typedef onika::algorithm::BTree< PTreeBase, std::less<double>, onika::algorithm::PNodeRefT > PTree;
 typedef typename PTree::NodeRef PNodeRef;
 
