@@ -1,0 +1,20 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="filters">
+   <SourceProxy name="OnikaWriter" class="vtkOnikaWriter" label="Progressive 3D mesh encoding using Onika">
+     <InputProperty
+        name="Input"
+        command="SetInputConnection">
+           <ProxyGroupDomain name="groups">
+             <Group name="sources"/>
+             <Group name="filters"/>
+           </ProxyGroupDomain>
+           <DataTypeDomain name="input_type">
+             <DataType value="vtkDataSet"/>
+           </DataTypeDomain>
+      </InputProperty>
+ 
+   </SourceProxy>
+ </ProxyGroup>
+</ServerManagerConfiguration>
+
+

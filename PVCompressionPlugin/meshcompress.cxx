@@ -21,6 +21,9 @@
 
 #include "onika/algorithm/rbtree.h"
 
+// VTK dependencies
+#include <vtkUnstructuredGrid.h>
+
 typedef std::vector< std::tuple<
 		std::tuple<double,double,double>	// vertex position
 		, double				// vertex scalar
@@ -112,53 +115,21 @@ inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t 
 	return out;
 }
 
-int main(int argc, char* argv[])
+
+bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, int nedges, const std::string& outputFileName)
 {
-	int nedges = 10;
-	std::string inputFileName = "/dev/stdin";
-	std::string outputFileName = "/dev/stdout";
-	for(int i=1;i<argc;++i)
-	{
-		if( std::string(argv[i]) == "-c" )
-		{
-			++i; nedges = atoi(argv[i]);
-		}
-		else if( std::string(argv[i]) == "-i" )
-		{
-			++i; inputFileName = argv[i];
-		}
-		else if( std::string(argv[i]) == "-o" )
-		{
-			++i; outputFileName = argv[i];
-		}
-		else if( std::string(argv[i]) == "--help" )
-		{
-			std::cerr<<"Usage: "<<argv[0]<<" [-c <# edges>] [-i <input file>] [-o <output file>]\n";
-			return 0;
-		}
-	}
-
-	std::ifstream ifile(inputFileName.c_str());
-	if(!ifile)
-	{
-		std::cerr<<"Couldn't open '"<<inputFileName<<"' for reading\n";
-		return 1;
-	}
-
 	std::ofstream ofile(outputFileName);
 	if(!ofile)
 	{
 		std::cerr<<"Couldn't open '"<<outputFileName<<"' for writing\n";
-		return 1;
+		return false;
 	}
 
-	std::cout<<"Input = "<<inputFileName<<"\n";
 	std::cout<<"Output = "<<outputFileName<<"\n";
 	std::cout<<"Edges = "<<nedges<<"\n";
 
 	Mesh mesh;
-	onika::vtk::readVtkAsciiMesh(ifile,mesh);
-	onika::vtk::readVtkAsciiScalars(ifile,mesh);
+	// build data structure from grid
 
 	// build reverse connectivity
 	V2C v2c( mesh.cells, mesh.nverts ); 
