@@ -131,11 +131,69 @@ struct TupleVec
 	VecTuple m_vecTuple;
 };
 
+// variant where zipped containers are copied and not referenced
+template<class... Types>
+struct TupleVecCpy
+{
+	// tuple of references to containers
+	typedef std::tuple<Types...> VecTuple;
+
+	// number of containers
+	static constexpr unsigned int NComp = sizeof...(Types);
+
+	// value returned for each element is a tuple of Ti::value_type for each Ti in Types, e.g. a tuple of types returned by each container
+	typedef std::tuple< typename Types::value_type ... > ElementTuple;
+
+	// constructors
+	inline TupleVecCpy( const Types&... constRefsToContainers ) : m_vecTuple( constRefsToContainers... )
+	{
+		// dbg_assert( all_equal_size );
+	}
+
+	// generic container API
+	ONIKA_CONTAINER_ACCESS_DEF(TupleVecCpy,ElementTuple);
+	ONIKA_CONTAINER_PUSH_BACK_DEF(TupleVecCpy,ElementTuple);
+
+	inline void resize(size_t n)
+	{
+		TupleVecHelper<NComp>::resize(m_vecTuple,n);
+	}
+
+	inline void resize(size_t n, const value_type& val )
+	{
+		TupleVecHelper<NComp>::resize(m_vecTuple,n,val);
+	}
+
+	inline size_t size() const
+	{
+		return TupleVecHelper<NComp>::size(m_vecTuple);
+	}
+
+	inline void set(size_t i, const value_type& val)
+	{
+		TupleVecHelper<NComp>::set( m_vecTuple , i , val );
+	}
+
+	inline value_type get(size_t i) const
+	{
+		return tuple::map( m_vecTuple , ContainerIthElementOp(i) );
+	}
+
+	// references to containers stored as a tuple of references
+	VecTuple m_vecTuple;
+};
+
 
 template<class... Types>
 inline auto zip_vectors( Types&... t ) -> TupleVec< Types... >
 {
 	return TupleVec< Types... > ( t... );
+}
+
+template<class... Types>
+inline auto zip_vectors_cpy( const Types&... t ) -> TupleVecCpy< Types... >
+{
+	return TupleVecCpy< Types... > ( t... );
 }
 
 

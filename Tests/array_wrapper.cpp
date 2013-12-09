@@ -29,6 +29,7 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 
 using onika::container::array_wrapper;
 using onika::container::zip_vectors;
+using onika::container::zip_vectors_cpy;
 
 int main()
 {
@@ -66,11 +67,20 @@ int main()
 	} std::cout<<"\n\n";
 
 	auto t1 = zip_vectors(aw, aw2);
-	for( auto x:t1 ) { std::cout<< x <<" "; }
-	std::cout<<"\n\n";
+	for( auto x:t1 ) { std::cout<< x <<" "; } std::cout<<"\n\n";
 
 	t1[10] = std::make_tuple(666.0,-1.0);
 
+	for(int i=0;i<100;i++)
+	{
+		std::cout<<'('<<aw[i]<<','<<aw2[i]<<") ";
+	} std::cout<<"\n\n";
+
+	// Copying the ArrayWrapper wil still act as a reference to the data elements since what is copied is a pointer to elements
+	// thus the 2 following printed series will be equal
+	auto t2 = zip_vectors_cpy(aw, aw2);
+	t2[10] = std::make_tuple(777.0,8.0);
+	for( auto x:t2 ) { std::cout<< x <<" "; } std::cout<<"\n\n";
 	for(int i=0;i<100;i++)
 	{
 		std::cout<<'('<<aw[i]<<','<<aw2[i]<<") ";
