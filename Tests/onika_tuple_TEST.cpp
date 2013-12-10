@@ -105,6 +105,12 @@ int main()
 	std::cout<<"1-uple: "<<  std::make_tuple(1) << "\n";
 	std::cout<<"tuple of tuples "<<  std::make_tuple(1,std::make_tuple("Thierry",'G',"Carrard"),2.0) << "\n";
 
+	// next gen tuple funcs
+	auto tx = std::make_tuple(1.0,"Hello",3u);
+	auto ty = onika::tuple::my_tuple_map( tx, AddOne() );
+	std::cout<<ty<<"\n";
+
+
 	return 0;
 }
  // end of language.h

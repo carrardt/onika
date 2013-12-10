@@ -42,7 +42,14 @@ namespace onika { namespace tuple {
 	};
 	template<unsigned int N> using make_tuple_indices = typename BuildTupleIndices<N>::type;
 
+	// Wooow ! ...
+	template<class Func, class Tuple, unsigned int... Indices>
+	auto my_tuple_map_aux( const Tuple& x, Func f, TupleIndices<Indices...> ignored )
+	ONIKA_AUTO_RET( std::make_tuple( f(std::get<Indices>(x)) ... ) )
 
+	template<class Func, class... T>
+	auto my_tuple_map( const std::tuple<T...>& x, Func f )
+	ONIKA_AUTO_RET( my_tuple_map_aux(x,f,make_tuple_indices<sizeof...(T)>()) )
 
 
 	template<unsigned int N> struct TupleHelper;
