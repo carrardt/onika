@@ -13,6 +13,7 @@ namespace onika { namespace language {
 	template< typename _Tp, bool _IsInt=std::is_integral<_Tp>::value > struct MakeSigned;
 	template< typename _Tp> struct MakeSigned<_Tp,true> { typedef typename std::make_signed<_Tp>::type type; };
 	template< typename _Tp> struct MakeSigned<_Tp,false> { typedef _Tp type; };
+
 } }
 
 // ==========================================================

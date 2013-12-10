@@ -26,6 +26,25 @@ namespace std
 
 namespace onika { namespace tuple {
 
+
+	// ======================== Tuple Indices =======================
+	template<unsigned int... Indices>
+	struct TupleIndices {
+		using next = TupleIndices<Indices..., sizeof...(Indices)>;
+	};
+	template<unsigned int Size>
+	struct BuildTupleIndices {
+		using type = typename BuildTupleIndices<Size - 1>::type::next;
+	};
+	template<>
+	struct BuildTupleIndices<0> {
+		using type = TupleIndices<>;
+	};
+	template<unsigned int N> using make_tuple_indices = typename BuildTupleIndices<N>::type;
+
+
+
+
 	template<unsigned int N> struct TupleHelper;
 
 	//======================================
@@ -277,14 +296,12 @@ namespace onika { namespace tuple {
 		StreamT& out;
 	};
 
+
 } }
 
 #define ONIKA_USE_TUPLE_OSTREAM \
 using onika::tuple::operator <<;
 
-// ==========================================================
-// ======================== UNIT TEST =======================
-// ==========================================================
 #endif // end of tuple.h
 
 

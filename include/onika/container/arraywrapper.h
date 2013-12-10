@@ -81,17 +81,16 @@ namespace onika { namespace container {
 	template<class T,int S=1>
 	ArrayWrapper<T,S> array_wrapper( T* pointer, size_t maxSize) { ArrayWrapper<T,S> aw = {pointer,maxSize,maxSize}; return aw; }
 
-	// if p is a pointer to an array containing x1, y1, x2, y2, ... , xn, yn ;
-	// this will build a 2-tuple view of the array containing (x1,y1) , (x2,y2) , ... , (xn,yn)
-	template<class T>
-	auto flatten_tuple2_array_wrapper( T* p, size_t n)
-	ONIKA_AUTO_RET( zip_vectors_cpy(array_wrapper<T,2>(p,n),array_wrapper<T,2>(p+1,n)) )
+	// wrapper for arrays that describe tuple arrays with tuple elements serialized in array.
+	// i.e. : building a 3-tuple wrapper from an array containing x1,y1,z1,x2,y2,z2,...,xN,yN,zN
+	// will result in a container of 3-tuples (x1,y1,z1) , (x2,y2,z2) , ... , (xN,yN,zN)
+	template<class T,unsigned int... Indices>
+	auto flat_tuple_array_wrapper_aux( T* p, size_t sz, onika::tuple::TupleIndices<Indices...> ignored )
+	ONIKA_AUTO_RET( zip_vectors_cpy( array_wrapper<T,sizeof...(Indices)>(p+Indices,sz) ... ) )
 
-	// if p is a pointer to an array containing x1, y1, z1, x2, y2, z2, ... , xn, yn, zn ;
-	// this will build a 2-tuple view of the array containing (x1,y1,z1) , (x2,y2,z2) , ... , (xn,yn,zn)
-	template<class T>
-	auto flatten_tuple3_array_wrapper( T* p, size_t n)
-	ONIKA_AUTO_RET( zip_vectors_cpy(array_wrapper<T,3>(p,n),array_wrapper<T,3>(p+1,n),array_wrapper<T,3>(p+2,n)) )
+	template<unsigned int N,class T>
+	auto flat_tuple_array_wrapper( T* p, size_t sz)
+	ONIKA_AUTO_RET( flat_tuple_array_wrapper_aux(p,sz,onika::tuple::make_tuple_indices<N>() ) )
 
 } }
 

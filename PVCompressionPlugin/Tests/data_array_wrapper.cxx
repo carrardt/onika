@@ -22,8 +22,7 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 }
 
 using onika::container::wrap_vtkarray;
-using onika::container::wrap_vtkarray_tuple2;
-using onika::container::wrap_vtkarray_tuple3;
+using onika::container::wrap_vtkarray_tuple;
 using std::cout;
 
 int main()
@@ -36,7 +35,7 @@ int main()
 	doubleArray->FillComponent(2,0.3);
 	doubleArray->WritePointer(0,10);
 
-	auto myContainer = wrap_vtkarray_tuple3( doubleArray );
+	auto myContainer = wrap_vtkarray_tuple<3>( doubleArray );
 	cout<<myContainer.size()<<" values: ";
 	for( auto x : myContainer ) { cout<<x<<" "; }
 	cout<<"\n\n";
