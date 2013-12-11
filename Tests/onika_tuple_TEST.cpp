@@ -107,7 +107,7 @@ int main()
 
 	// next gen tuple funcs
 	auto tx = std::make_tuple(1.0,"Hello",3u);
-	auto ty = onika::tuple::my_tuple_map( tx, AddOne() );
+	auto ty = onika::tuple::map( tx, AddOne() );
 	std::cout<<ty<<"\n";
 
 

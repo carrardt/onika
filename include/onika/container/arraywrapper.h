@@ -43,7 +43,7 @@ namespace onika { namespace container {
 		pointer ptr;
 	};
 
-	template<class T,int ElementStride=1>
+	template<class T, int TupleStride=1>
 	struct ArrayWrapper
 	{
 		typedef T value_type;
@@ -57,9 +57,8 @@ namespace onika { namespace container {
 		typedef size_t size_type;
 		typedef typename std::reverse_iterator<iterator> reverse_iterator;
 
-		//! Warning: if ElementStride<>1 using begin() and end() will result in undefined behavior
 		inline iterator begin() { return iterator(dataptr); }
-		inline iterator end() { return iterator(dataptr+size()*ElementStride); }
+		inline iterator end() { return iterator(dataptr+size()*TupleStride); }
 
 		inline size_t capacity() const { return datacapacity; }
 		inline size_t size() const { return datasize; }
@@ -70,8 +69,8 @@ namespace onika { namespace container {
 		}
 		inline void clear() { datasize=0; }
 
-		inline T& operator [] (const size_t i) { return dataptr[i*ElementStride]; }
-		inline const T& operator [] (const size_t i) const { return dataptr[i*ElementStride]; }
+		inline T& operator [] (const size_t i) { return dataptr[i*TupleStride]; }
+		inline const T& operator [] (const size_t i) const { return dataptr[i*TupleStride]; }
 
 		T* dataptr;
 		size_t datasize;
@@ -84,13 +83,13 @@ namespace onika { namespace container {
 	// wrapper for arrays that describe tuple arrays with tuple elements serialized in array.
 	// i.e. : building a 3-tuple wrapper from an array containing x1,y1,z1,x2,y2,z2,...,xN,yN,zN
 	// will result in a container of 3-tuples (x1,y1,z1) , (x2,y2,z2) , ... , (xN,yN,zN)
-	template<class T,unsigned int... Indices>
-	auto flat_tuple_array_wrapper_aux( T* p, size_t sz, onika::tuple::TupleIndices<Indices...> ignored )
-	ONIKA_AUTO_RET( zip_vectors_cpy( array_wrapper<T,sizeof...(Indices)>(p+Indices,sz) ... ) )
+	template<class T,unsigned int... I>
+	auto flat_tuple_array_wrapper_aux( T* p, size_t sz, onika::tuple::indices<I...> ignored )
+	ONIKA_AUTO_RET( zip_vectors_cpy( array_wrapper<T,sizeof...(I)>(p+I,sz) ... ) )
 
 	template<unsigned int N,class T>
 	auto flat_tuple_array_wrapper( T* p, size_t sz)
-	ONIKA_AUTO_RET( flat_tuple_array_wrapper_aux(p,sz,onika::tuple::make_tuple_indices<N>() ) )
+	ONIKA_AUTO_RET( flat_tuple_array_wrapper_aux(p,sz,onika::tuple::make_indices<N>() ) )
 
 } }
 
