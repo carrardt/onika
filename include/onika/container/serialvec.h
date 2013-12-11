@@ -11,6 +11,23 @@
 
 namespace onika { namespace container {
 
+template<class Tuple, class T> struct grow_tuple {};
+template<class... Types, class T>
+struct grow_tuple< std::tuple<Types...>, T > { using type = std::tuple<Types...,T>; };
+
+template<class T,unsigned int N>
+struct array_as_tuple
+{
+	using type = grow_tuple< array_as_tuple<T,N-1>::type , T >;
+};
+
+template<class T>
+struct array_as_tuple<T,0u>
+{
+	using type = std::tuple<>;
+};
+
+
 template<typename _BaseContainer, unsigned int _N>
 struct SerialVec
 {
@@ -44,7 +61,6 @@ struct SerialVec
 		for(int c=0;c<NComp;++c) r.x[i] = data[i*NComp+c];
 		return r;
 	}
-
 
 	BaseContainer data;
 };

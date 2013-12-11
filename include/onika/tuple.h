@@ -43,7 +43,7 @@ namespace onika { namespace tuple {
 	template<unsigned int N> using make_indices = typename BuildIndices<N>::type;
 
 
-	// check if a set of types are all tuples
+	// ======================== Tuple type check =======================
 	template<class T> struct is_tuple { static constexpr bool value=false; };
 	template<class... T> struct is_tuple<std::tuple<T...> > { static constexpr bool value=true; };
 
@@ -203,47 +203,58 @@ namespace onika { namespace tuple {
 	};
 
 	// ======== apply =============
-	template<class Functor, class... Types>
-	inline void apply( std::tuple<Types...>& t , Functor f )
-	{
-		TupleHelper<sizeof...(Types)>::apply( t , f );
-	}
-	template<class Functor, class... Types>
-	inline void apply( const std::tuple<Types...>& t , Functor f )
-	{
-		TupleHelper<sizeof...(Types)>::apply( t , f );
-	}
+	// map function to a subset of tuple elements referenced by their indices
+	template<class Tuple, class Func, unsigned int... I>
+	auto apply( Tuple& x, Func f, indices<I...> ignored )
+	ONIKA_AUTO_RET( ( f(std::get<I>(x)) ... ) )
+
+	template<class Func, class... T>
+	auto apply( std::tuple<T...>& x, Func f )
+	ONIKA_AUTO_RET( apply(x,f,make_indices<sizeof...(T)>()) )
 
 	// ============ map ==================
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, unsigned int... I>
-	auto map_subset( const Tuple& x, Func f, indices<I...> ignored )
+	auto map( const Tuple& x, Func f, indices<I...> ignored )
 	ONIKA_AUTO_RET( std::make_tuple( f(std::get<I>(x)) ... ) )
 
 	template<class Func, class... T>
 	auto map( const std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( map_subset(x,f,make_indices<sizeof...(T)>()) )
+	ONIKA_AUTO_RET( map(x,f,make_indices<sizeof...(T)>()) )
 
 	// ============== zip  ==============
 	template<class T1, class T2, unsigned int... I>
-	auto zip_subset( const T1& t1, const T2& t2, indices<I...> ignored )
+	auto zip( const T1& t1, const T2& t2, indices<I...> ignored )
 	ONIKA_AUTO_RET( std::make_tuple( std::make_tuple(std::get<I>(t1),std::get<I>(t2)) ... ) )
 
 	template<class... Types1, class... Types2>
 	inline auto zip( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
-	ONIKA_AUTO_RET( zip_subset(t1,t2,make_indices<sizeof...(Types1)>()) )
+	ONIKA_AUTO_RET( zip(t1,t2,make_indices<sizeof...(Types1)>()) )
 
 	// ============== tie_zip  ==============
+	template<class T1, class T2, unsigned int... I>
+	auto tie_zip( const T1& t1, const T2& t2, indices<I...> ignored )
+	ONIKA_AUTO_RET( std::make_tuple( std::tie(std::get<I>(t1),std::get<I>(t2)) ... ) )
+
 	template<class... Types1, class... Types2>
-	inline auto tie_zip( std::tuple<Types1...>& t1 , std::tuple<Types2...>& t2 )
-	ONIKA_AUTO_RET( TupleHelper<sizeof...(Types1)>::tie_zip(t1,t2) )
+	inline auto tie_zip( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
+	ONIKA_AUTO_RET( tie_zip(t1,t2,make_indices<sizeof...(Types1)>()) )
 
 	// ============ sequence ================
-	template<unsigned int N> inline auto sequence() ONIKA_AUTO_RET( TupleHelper<N>::sequence()  )
+	template<unsigned int... I>
+	auto sequence( indices<I...> ignored )
+	ONIKA_AUTO_RET( std::make_tuple(I...) )
 
+	template<unsigned int N> inline auto sequence()
+	ONIKA_AUTO_RET( sequence(make_indices<N>()) )
 
 	// ============= repeat ================
-	template<unsigned int N, class T> inline auto repeat(const T& x) ONIKA_AUTO_RET( TupleHelper<N>::repeat(x)  )
+	template<class T, unsigned int... I>
+	auto repeat( const T& x, indices<I...> ignored )
+	ONIKA_AUTO_RET( std::make_tuple( ((void)I,x) ... ) )
+
+	template<unsigned int N, class T> inline auto repeat(const T& x)
+	ONIKA_AUTO_RET( repeat(x,make_indices<N>()) )
 
 
 	// ========================================

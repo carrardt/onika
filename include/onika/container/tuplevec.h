@@ -145,6 +145,7 @@ struct TupleVecCpy
 	typedef std::tuple< typename Types::value_type ... > ElementTuple;
 
 	// constructors
+	inline TupleVecCpy() { }
 	inline TupleVecCpy( const Types&... constRefsToContainers ) : m_vecTuple( constRefsToContainers... )
 	{
 		// dbg_assert( all_equal_size );
