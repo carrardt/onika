@@ -75,46 +75,10 @@ namespace onika { namespace tuple {
 	inline bool lexical_order( const T1& x1, const T2& x2 ) { return TupleHelperSelector<T1>::lexical_order(x1,x2); }
 
 	//======================================
-	//=========== Helper classes ===========
+	//=========== Helper class ===========
 	//======================================
 	template<unsigned int N> struct TupleHelper
 	{
-		// APPLY
-		template <class Func, class... Types>
-		static inline void apply( std::tuple<Types...> & t, Func f )
-		{
-		        TupleHelper<N-1>::apply( t , f );
-		        f ( std::get<N-1>( t ) );
-		}
-		template <class Func, class... Types>
-		static inline void apply( const std::tuple<Types...> & t, Func f )
-		{
-		        TupleHelper<N-1>::apply( t , f );
-		        f ( std::get<N-1>( t ) );
-		}
-
-		// MAP
-		template <class Func, class... Types>
-		static inline auto map( const std::tuple<Types...> & t, Func f )
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::map(t,f) , std::make_tuple( f(std::get<N-1>(t)) ) ) )
-
-		// ZIP
-		template<class... Types1, class... Types2>
-		static inline auto zip( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::zip(t1,t2) , std::make_tuple( std::make_tuple( std::get<N-1>(t1) , std::get<N-1>(t2) ) ) ) )
-
-		// TIE_ZIP
-		template<class... Types1, class... Types2>
-		static inline auto tie_zip( std::tuple<Types1...>& t1 , std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::tie_zip(t1,t2) , std::make_tuple( std::tie( std::get<N-1>(t1) , std::get<N-1>(t2) ) ) ) )
-
-		static inline auto sequence()
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::sequence() , std::tuple<unsigned int>(N-1) ) )
-
-		template<class T>
-		static inline auto repeat(const T& x)
-		ONIKA_AUTO_RET( std::tuple_cat( TupleHelper<N-1>::repeat(x) , std::make_tuple(x) ) )
-
 		template<class... Types1, class... Types2>
 		static inline bool all_equal(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
 		{
@@ -131,31 +95,8 @@ namespace onika { namespace tuple {
 		}
 
 	};
-	
 	template<> struct TupleHelper<1>
 	{
-		template <class Func, class... Types>
-		static inline void apply( std::tuple<Types...> & t, Func f ) { f ( std::get<0>( t ) ); }
-
-		template <class Func, class... Types>
-		static inline void apply( const std::tuple<Types...> & t, Func f ) { f ( std::get<0>( t ) ); }
-
-		template <class Func, class... Types>
-		static inline auto map( const std::tuple<Types...> & t, Func f )
-		ONIKA_AUTO_RET( std::make_tuple( f ( std::get<0>( t ) ) ) )
-
-		template<class... Types1, class... Types2>
-		static inline auto zip( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( std::make_tuple( std::make_tuple(std::get<0>(t1) , std::get<0>(t2)) )  ) 
-
-		template<class... Types1, class... Types2>
-		static inline auto tie_zip( std::tuple<Types1...>& t1 , std::tuple<Types2...>& t2 )
-		ONIKA_AUTO_RET( std::make_tuple( std::tie(std::get<0>(t1) , std::get<0>(t2)) )  ) 
-
-		static inline std::tuple<unsigned int> sequence() { return std::tuple<unsigned int>(0); }
-		
-		template<class T> static inline auto repeat(const T& x) ONIKA_AUTO_RET( std::make_tuple(x) )
-
 		template<class... Types1, class... Types2>
 		static inline bool all_equal(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
 		{
@@ -167,31 +108,10 @@ namespace onika { namespace tuple {
 		{
 			return tuple::lexical_order( std::get<0>(t1), std::get<0>(t2) );
 		}
-
 	};
 
 	template<> struct TupleHelper<0>
 	{
-		template <class Func, class... Types>
-		static inline void apply( std::tuple<Types...> & t, Func f ) {}
-
-		template <class Func, class... Types>
-		static inline void apply( const std::tuple<Types...> & t, Func f ) {}
-
-		template <class Func, class... Types>
-		static inline std::tuple<> map( const std::tuple<Types...> & t, Func f ) { return std::tuple<>(); }
-
-		template<class... Types1, class... Types2>
-		static inline std::tuple<> zip( const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2 ) { return std::tuple<>(); }
-
-		template<class... Types1, class... Types2>
-		static inline std::tuple<> tie_zip( std::tuple<Types1...>& t1 , std::tuple<Types2...>& t2 ) { return std::tuple<>(); }
-
-		static inline std::tuple<> sequence() { return std::tuple<>(); }
-		
-		template<class T>
-		static inline std::tuple<> repeat(const T& x) { return std::tuple<>(); }
-
 		static inline bool all_equal(const std::tuple<>& t1 , const std::tuple<>& t2)
 		{
 			return true;
@@ -206,7 +126,7 @@ namespace onika { namespace tuple {
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, unsigned int... I>
 	auto apply( Tuple& x, Func f, indices<I...> ignored )
-	ONIKA_AUTO_RET( ( f(std::get<I>(x)) ... ) )
+	ONIKA_AUTO_RET( ONIKA_NOOP( f(std::get<I>(x)) ... ) )
 
 	template<class Func, class... T>
 	auto apply( std::tuple<T...>& x, Func f )
@@ -261,7 +181,6 @@ namespace onika { namespace tuple {
 	// =============== print ==================
 	// ========================================
 
-	template<class StreamT> struct PrintTupleOp;
 	template<class T> struct PrintTuple;
 
 	template<class StreamT, class... T>
@@ -294,14 +213,16 @@ namespace onika { namespace tuple {
 		}
 	};
 
+	template<class StreamT> struct PrintTupleOp;
+
 	template<class... T> struct PrintTuple< std::tuple<T...> >
 	{
 		template<class StreamT>
 		static inline StreamT& print( StreamT& out, const std::tuple<T...>& x )
 		{
 			out<< '(';
-			TupleHelper< sizeof...(T) - 1 >::apply( x, PrintTupleOp<StreamT>(out) );
-			out << std::get< sizeof...(T) - 1 >(x) << ')';
+			apply(x,PrintTupleOp<StreamT>(out),make_indices<sizeof...(T)-1>());
+			out << std::get<sizeof...(T)-1>(x) << ')';
 			return out;
 		}
 	};
@@ -310,7 +231,7 @@ namespace onika { namespace tuple {
 	struct PrintTupleOp
 	{
 		inline PrintTupleOp(StreamT& s) : out(s) {}
-		template<class T> inline StreamT& operator () ( const T& x) const
+		template<class T> inline StreamT& operator () ( const T& x ) const
 		{
 			PrintTuple<T>::print(out,x);
 			out<< ',';
@@ -319,6 +240,7 @@ namespace onika { namespace tuple {
 		StreamT& out;
 	};
 
+//	inline auto print_tuple_element_op(StreamT& s, )
 
 } }
 

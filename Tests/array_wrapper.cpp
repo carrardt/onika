@@ -16,14 +16,14 @@ inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t 
 template<class T>
 inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t )
 {
-	out << t.get() ;
+	onika::tuple::print( out, t.get() );
 	return out;
 }
 
 template<class T>
 inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t )
 {
-	out << t.get() ;
+	onika::tuple::print( out, t.get() );
 	return out;
 }
 
