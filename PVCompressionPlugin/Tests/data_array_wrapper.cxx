@@ -1,4 +1,5 @@
-#include "vtkDataArrayWrapper.h"
+#include "vtkarraywrapper.h"
+#include "onika/mesh/meshalgorithm.h"
 #include <vtkDoubleArray.h>
 #include <iostream>
 
@@ -21,8 +22,9 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 	return out;
 }
 
-using onika::container::wrap_vtkarray;
-using onika::container::wrap_vtkarray_tuple;
+using onika::vtk::wrap_vtkarray;
+using onika::vtk::wrap_vtkarray_tuple;
+using onika::mesh::vertexDistance;
 using std::cout;
 
 int main()
@@ -48,6 +50,8 @@ int main()
 		cout<<'('<<t[0]<<','<<t[1]<<','<<t[2]<<") ";
 	}
 	cout<<"\n\n";
+
+	cout<<"vertex distance (5,7) : "<< vertexDistance(myContainer,5,7) << "\n";
 
 	return 0;
 }

@@ -15,7 +15,7 @@
 #include "vtkOnikaWriter.h"
 #include "vtkObjectFactory.h"
 
-#include "vtkDataArrayWrapper.h"
+#include "vtkarraywrapper.h"
 
 vtkStandardNewMacro(vtkOnikaWriter);
 
