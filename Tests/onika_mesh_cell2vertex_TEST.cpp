@@ -1,10 +1,10 @@
-#include "onika/mesh/cell2vertex.h"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <fstream>
 
+#include "onika/mesh/cell2vertex.h"
 #include "onika/vtk/readvtkascii.h"
 #include "onika/mesh/simplicialmesh.h"
 

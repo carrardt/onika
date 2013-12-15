@@ -12,7 +12,7 @@ simple traits for simplicial cells of equal dimensions, with vertex ids packed s
 exemple: for 3D case, cells are tetrahedras (4 vertices per cell). array will contain :
 Cell1:Vertex1, Cell1:Vertex2, Cell1:Vertex3, Cell1:Vertex4, Cell2:Vertex1 ...
 */ 
-template<class _ContainerType, unsigned int _NDim>
+template<class _ContainerType, unsigned int _NDim,int _CellGap=0>
 struct smesh_c2v_basic_traits
 {
 	typedef _ContainerType ContainerType;
@@ -20,22 +20,31 @@ struct smesh_c2v_basic_traits
 
 	// Simplex dimension
 	static constexpr unsigned int NDim = _NDim;
+
+	// number of vertices per cell
 	static constexpr IdType NVerts = NDim+1;
+
+	// empty vertex slots between two cells.
+	// i.e. usefull for storage where you have NCellVerts,V1,V2...,Vn, NCellVerts, ...
+	static constexpr IdType CellGap = _CellGap;
+
+	// space between two cells
+	static constexpr IdType CellStride = NVerts+CellGap;
 
 	// =================================================================================
 	// ============================ read only access ===================================
 	// =================================================================================
 	static constexpr IdType getMaxCellVertices(const ContainerType& c) { return NVerts; }
-	static inline IdType getNumberOfCells(const ContainerType& c) { return c.size()/NVerts; }
-        static inline IdType getTotalNumberOfCellVertices(const ContainerType& c) { return c.size(); }
+	static inline IdType getNumberOfCells(const ContainerType& c) { return c.size()/CellStride; }
+    static inline IdType getTotalNumberOfCellVertices(const ContainerType& c) { return getNumberOfCells(c)*NVerts; }
 	static inline IdType getCellNumberOfVertices(const ContainerType& c, IdType i) { return NVerts; }
-	static inline IdType getCellVertexId(const ContainerType& c, IdType cell, IdType i) { return c[cell*NVerts+i]; }
+	static inline IdType getCellVertexId(const ContainerType& c, IdType cell, IdType i) { return c[cell*CellStride+i]; }
 
 
 	// =================================================================================
 	// ============================ write access =======================================
 	// =================================================================================
-	static inline void setCellVertexId(ContainerType& c, IdType cell, IdType i, IdType j) { c[ (cell*NVerts) + i ] = j; }
+	static inline void setCellVertexId(ContainerType& c, IdType cell, IdType i, IdType j) { c[ (cell*CellStride) + i ] = j; }
 	static inline void setCellNumberOfVertices(ContainerType& c, IdType cell, IdType n)  // you _cannot_ modify number of vertices
 	{
 		debug::dbgassert( cell>=0 && cell<getNumberOfCells(c) );
@@ -45,20 +54,20 @@ struct smesh_c2v_basic_traits
 	static inline void eraseVertex(ContainerType& c, IdType cell, IdType vert)  {}
 	static inline void swapVertices(ContainerType& c, IdType cA, IdType vA, IdType cB, IdType vB)
 	{
-		std::swap( c[ (cA*(NDim+1)) + vA ] , c[ (cB*(NDim+1)) + vB ] );
+		std::swap( c[ (cA*CellStride) + vA ] , c[ (cB*CellStride) + vB ] );
 	}
 	static inline void moveVertexTo(ContainerType& c, IdType cA, IdType vA, IdType cB, IdType vB)
 	{
 		if( (cA != cB) || (vA != vB) )
 		{
-			c[ (cB*NVerts) + vB ] = c[ (cA*NVerts) + vA ] ;
+			c[ (cB*CellStride) + vB ] = c[ (cA*CellStride) + vA ] ;
 			eraseVertex(c, cA, vA );
 		}
 	}
-	
+
 	static inline void removeLastNCells(ContainerType& c, IdType n)
 	{
-		c.resize( c.size() - n * (NDim+1) );
+		c.resize( c.size() - n * CellStride );
 	}
 };
 
