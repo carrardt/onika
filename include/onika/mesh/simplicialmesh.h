@@ -91,7 +91,7 @@ struct smesh_c2e_basic_traits
 	// =================================================================================
 	static constexpr IdType getMaxCellEdges(const ContainerType& c) { return NEdges; }
 	static inline IdType getNumberOfCells(const ContainerType& c) { return c2v_traits::getNumberOfCells(c); }
-        static inline IdType getTotalNumberOfCellEdges(const ContainerType& c) { return getNumberOfCells(c) * NEdges; }
+    static inline IdType getTotalNumberOfCellEdges(const ContainerType& c) { return getNumberOfCells(c) * NEdges; }
 	static inline IdType getCellNumberOfEdges(const ContainerType& c, IdType i) { return NEdges; }
 	static inline std::tuple<IdType,IdType> getCellEdge(const ContainerType& c, IdType cell, IdType e)
 	{

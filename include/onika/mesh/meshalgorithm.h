@@ -68,34 +68,25 @@ struct IndexedValueCompare
 template<typename Vector>
 inline IndexedValueCompare<Vector> indexed_value_compare(const Vector&v) { return IndexedValueCompare<Vector>(v); }
 
-
-template<class VertexContainer, class IdType>
-inline auto vertexDistance( const VertexContainer& vertices, IdType a, IdType b )
-ONIKA_AUTO_RET( onika::math::distance(vertices[a],vertices[b]) )
-
-template<class VertexContainer, class IdType>
-inline auto edgeLength( const VertexContainer& vertices, const std::tuple<IdType,IdType>& edge )
-ONIKA_AUTO_RET( vertexDistance(vertices,std::get<0>(edge),std::get<1>(edge)) )
-
-
+// operator that returns an edge length given 2 vertex indices
 template<class VertexContainer>
-struct EdgeLengthCompare
+struct EdgeLengthOp
 {
-	inline EdgeLengthCompare(const VertexContainer& v) : vertices(v) {}
-	
-	template<class IdType>
-	inline bool operator () ( const std::tuple<IdType,IdType>& E1, const std::tuple<IdType,IdType>& E2) const
-	{
-		return edgeLength(vertices,E1) < edgeLength(vertices,E2);
-	}
-
 	const VertexContainer& vertices;
+
+	inline EdgeLengthOp(const VertexContainer& v) : vertices(v) {}
+
+	template<class IdType>
+	inline auto operator () ( const std::tuple<IdType,IdType>& edge ) const
+	ONIKA_AUTO_RET( onika::math::distance( vertices[std::get<0>(edge)] , vertices[std::get<1>(edge)] ) )
 };
 
-template<class VertexContainer, class CellContainer, class c2e_traits>
+template<class c2e_traits, class EdgeLengthFunc>
 struct CellMinEdgeLengthCompare
 {
-	inline CellMinEdgeLengthCompare(const VertexContainer& _v, const CellContainer& _c) : cells(_c), vertices(_v) {}
+	using CellContainer = typename c2e_traits::ContainerType;
+
+	inline CellMinEdgeLengthCompare(const CellContainer& _c, const EdgeLengthFunc& el) : cells(_c), edgeLength(el) {}
 
 	template<class IdType>
 	inline bool operator () ( IdType cellA, IdType cellB ) const
@@ -106,23 +97,31 @@ struct CellMinEdgeLengthCompare
 		if( nedgesA <= 0 ) return false;
 		if( nedgesB <= 0 ) return true;
 		auto edge = c2e_traits::getCellEdge(cells,cellB,0);
-		auto elen = edgeLength(vertices,edge);
+		auto elen = edgeLength(edge);
 		for(IdType e=1;e<nedgesB;++e)
 		{
-			auto l = edgeLength(vertices,c2e_traits::getCellEdge(cells,cellB,e));
+			auto l = edgeLength( c2e_traits::getCellEdge(cells,cellB,e) );
 			if( l < elen ) elen = l;
 		}
 		for(IdType e=0;e<nedgesA;++e)
 		{
-			auto l = edgeLength(vertices,c2e_traits::getCellEdge(cells,cellA,e));
+			auto l = edgeLength( c2e_traits::getCellEdge(cells,cellA,e) );
 			if( l < elen ) return true;
 		}
 		return false;
 	}
-	const VertexContainer& vertices;
+
 	const CellContainer& cells;
+	EdgeLengthFunc edgeLength;
 };
 
+template<class c2e_traits>
+struct CellShortestEdge
+{
+	template<class EdgeLengthFunc>
+	static inline auto less(const typename c2e_traits::ContainerType& cells, const EdgeLengthFunc& el)
+	ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2e_traits,EdgeLengthFunc>(cells,el) )
+};
 
 } } // end of namespace
 
