@@ -26,6 +26,11 @@
 // VTK dependencies
 #include <vtkUnstructuredGrid.h>
 
+// TODO: progressively get rid of the need to buil types prior to use them.
+// everything would be much more readable and easy to use with in-function, auto declared variables
+// initialized with template functions.
+
+
 // Vertex-Cell 2-way connectivity
 typedef onika::container::ArrayWrapper<vtkIdType> MyCellContainer;
 typedef onika::mesh::smesh_c2v_basic_traits<MyCellContainer,3,1> MyC2VBasicTraits;
@@ -48,6 +53,7 @@ typedef onika::container::ArrayWrapper<double> MyCellValueContainer;
 
 
 // specialization of vertexDistance method for my own vertex container
+// FIXME: is overloading of a common function the best way to define distance between vertices ?
 namespace onika { namespace mesh {
 
 // Vertices are tuples where first element is a 3-tuple storing vertex coordinates
@@ -104,6 +110,36 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	
 	int nCells = v2c.getNumberOfCells();
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
+
+	// build vertices adapter
+
+
+#if 0
+	// build the comparison operator that sorts cells according to their shortest edge length
+	MyCellShortestEdge cellPriorityCompare(mesh.vertices,mesh.cells);
+	CellPriorityTree cellPriorityTree(cellPriorityCompare);
+
+	std::cout<< "edge (54,32) length = "<< onika::mesh::vertexDistance(mesh.vertices,54,32) <<"\n";
+	for(int i=0;i<nCells;i++)
+	{
+		int nEdges = MyC2EBasicTraits::getCellNumberOfEdges(mesh.cells,i);
+		std::cout<<"Cell "<<i<<" :\n";
+		for(int e=0;e<nEdges;e++)
+		{
+			auto edge = MyC2EBasicTraits::getCellEdge(mesh.cells,i,e);
+			std::cout<<"\tEdge "<< e<<": "<< edge <<", length="<< onika::mesh::edgeLength(mesh.vertices,edge)<<"\n";
+		}
+	}
+
+	std::cout<<"Sorting cells ... \n";
+	for(int i=0;i<nCells;i++)
+	{
+		cellPriorityTree.insert( i );
+	}
+	unsigned int dmin=-1, dmax=0;
+	onika::algorithm::probe_btree_depth( cellPriorityTree.getRoot(), dmin, dmax );
+	std::cout<<"Tree depth in ["<<dmin<<","<<dmax<<"]\n";
+#endif
 
     std::cerr<<"\nDONE\n";
     return true;

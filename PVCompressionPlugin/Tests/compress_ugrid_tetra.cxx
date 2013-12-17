@@ -7,6 +7,8 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
 
+#include <sys/time.h>
+
 bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, int nedges, const std::string& outputFileName);
 
 using namespace onika::vtk;
@@ -76,11 +78,15 @@ int main(int argc, char* argv[])
 	}
 
 	vtkUnstructuredGrid* output = vtkUnstructuredGrid::New();
+	struct timeval T1, T2;
+	gettimeofday(&T1,NULL);
 	if( ! onikaEncodeMesh(ugrid,output,nedges,outfname) )
 	{
 		cout<<"Compression failed\n";
 		return 1;
 	}
+	gettimeofday(&T2,NULL);
+	cout<<"execution time : "<<(T2.tv_sec-T1.tv_sec)*1000.0 + (T2.tv_usec-T1.tv_usec)*0.001<<" ms\n";
 
 	return 0;
 }

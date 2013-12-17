@@ -48,7 +48,29 @@ namespace onika { namespace tuple {
 	template<class... T> struct is_tuple<std::tuple<T...> > { static constexpr bool value=true; };
 
 
+	// ============ extending a tuple type by one new element ===============
+	template<class Tuple, class NewElement> struct GrowTuple {};
+	template<class... T, class NewElement> struct GrowTuple<std::tuple<T...>,NewElement>
+	{
+		using type = std::tuple<T...,NewElement>;
+	};
+
+	// ============ make a tuple type with repeated element type ===============
+	template<class T, unsigned int N>
+	struct UniformTuple
+	{
+		using type = typename GrowTuple< typename UniformTuple<T,N-1>::type , T >::type;
+	};
+	template<class T>
+	struct UniformTuple<T,0>
+	{
+		using type = std::tuple<>;
+	};
+	template <class T,unsigned int N> using uniform_tuple = typename UniformTuple<T,N>::type;
+
+	// forward declaration for helper template;
 	template<unsigned int N> struct TupleHelper;
+
 
 	//======================================
 	//== Select tuple/non tuple operators ==

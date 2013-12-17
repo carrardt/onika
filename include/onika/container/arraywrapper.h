@@ -57,6 +57,10 @@ namespace onika { namespace container {
 		typedef size_t size_type;
 		typedef typename std::reverse_iterator<iterator> reverse_iterator;
 
+		inline ArrayWrapper() : dataptr(0), datasize(0), datacapacity(0) {}
+		inline ArrayWrapper(T* p, size_t s) : dataptr(p), datasize(s), datacapacity(s) {}
+		inline ArrayWrapper(T* p, size_t s, size_t c) : dataptr(p), datasize(s), datacapacity(c) {}
+
 		inline iterator begin() { return iterator(dataptr); }
 		inline iterator end() { return iterator(dataptr+size()*TupleStride); }
 
@@ -78,7 +82,8 @@ namespace onika { namespace container {
 	};
 
 	template<class T,int S=1>
-	ArrayWrapper<T,S> array_wrapper( T* pointer, size_t maxSize) { ArrayWrapper<T,S> aw = {pointer,maxSize,maxSize}; return aw; }
+	auto array_wrapper( T* pointer, size_t maxSize)
+	ONIKA_AUTO_RET( ArrayWrapper<T,S>(pointer,maxSize) )
 
 	// wrapper for arrays that describe tuple arrays with tuple elements serialized in array.
 	// i.e. : building a 3-tuple wrapper from an array containing x1,y1,z1,x2,y2,z2,...,xN,yN,zN

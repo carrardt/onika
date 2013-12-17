@@ -1,29 +1,3 @@
-#if 0
-	// build the comparison operator that sorts cells according to their shortest edge length
-	MyCellShortestEdge cellPriorityCompare(mesh.vertices,mesh.cells);
-	CellPriorityTree cellPriorityTree(cellPriorityCompare);
-
-	std::cout<< "edge (54,32) length = "<< onika::mesh::vertexDistance(mesh.vertices,54,32) <<"\n";
-	for(int i=0;i<nCells;i++)
-	{
-		int nEdges = MyC2EBasicTraits::getCellNumberOfEdges(mesh.cells,i);
-		std::cout<<"Cell "<<i<<" :\n";
-		for(int e=0;e<nEdges;e++)
-		{
-			auto edge = MyC2EBasicTraits::getCellEdge(mesh.cells,i,e);
-			std::cout<<"\tEdge "<< e<<": "<< edge <<", length="<< onika::mesh::edgeLength(mesh.vertices,edge)<<"\n";
-		}
-	}
-
-	std::cout<<"Sorting cells ... \n";
-	for(int i=0;i<nCells;i++)
-	{
-		cellPriorityTree.insert( i );
-	}
-	unsigned int dmin=-1, dmax=0;
-	onika::algorithm::probe_btree_depth( cellPriorityTree.getRoot(), dmin, dmax );
-	std::cout<<"Tree depth in ["<<dmin<<","<<dmax<<"]\n";
-#endif
 // on le garde en commentaire pour exemple de quantification
 #if 0
 	Mesh basemesh;
