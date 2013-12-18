@@ -24,6 +24,7 @@
 
 // VTK dependencies
 #include <vtkUnstructuredGrid.h>
+#include <vtkFloatArray.h>
 
 // TODO: progressively get rid of the need to buil types prior to use them.
 // everything would be much more readable and easy to use with in-function, auto declared variables
@@ -37,14 +38,7 @@ typedef onika::mesh::C2VWrapper<MyC2VTraits> MyC2VWrapper;
 typedef onika::mesh::ReverseC2V<MyC2VWrapper, std::vector<int>, std::vector<unsigned int> > V2C;
 
 // Edge view
-typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> MyC2EBasicTraits;
-
-// Vertex Adpater
-// Vertices will be types as tuples of the form : ( (Vx,Vy,Vz) , Scalar )
-typedef onika::container::ArrayWrapper<double,3> VertSingleComp;
-typedef onika::container::TupleVecCpy<VertSingleComp,VertSingleComp,VertSingleComp> VertexCoordArray;
-typedef onika::container::ArrayWrapper<double> VertexScalarArray;
-typedef onika::container::TupleVec<VertexCoordArray,VertexScalarArray> MyVertexContainer;
+typedef onika::mesh::smesh_c2e_basic_traits<MyC2VBasicTraits> Cell2EdgesTraits;
 
 // Cell Values Adapter
 typedef onika::container::ArrayWrapper<double> MyCellValueContainer;
@@ -99,33 +93,33 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
 
 	// build vertices adapter
-
-#if 0
-	// build the comparison operator that sorts cells according to their shortest edge length
-	MyCellShortestEdge cellPriorityCompare(mesh.vertices,mesh.cells);
-	CellPriorityTree cellPriorityTree(cellPriorityCompare);
-
-	std::cout<< "edge (54,32) length = "<< onika::mesh::vertexDistance(mesh.vertices,54,32) <<"\n";
-	for(int i=0;i<nCells;i++)
+	cout<<"Points: "<<input->GetPoints()->GetData()->GetClassName()<<"\n";
+	vtkFloatArray* vtkpoints = vtkFloatArray::SafeDownCast(input->GetPoints()->GetData());
+	if( vtkpoints == 0 )
 	{
-		int nEdges = MyC2EBasicTraits::getCellNumberOfEdges(mesh.cells,i);
-		std::cout<<"Cell "<<i<<" :\n";
-		for(int e=0;e<nEdges;e++)
-		{
-			auto edge = MyC2EBasicTraits::getCellEdge(mesh.cells,i,e);
-			std::cout<<"\tEdge "<< e<<": "<< edge <<", length="<< onika::mesh::edgeLength(mesh.vertices,edge)<<"\n";
-		}
+		cout<<"Points array is not a vtkFloatArray\n";
+		return false;
+	}
+	if( vtkpoints->GetNumberOfComponents() != 3 )
+	{
+		cout<<"Points array doesn't have 3 components\n";
 	}
 
-	std::cout<<"Sorting cells ... \n";
-	for(int i=0;i<nCells;i++)
+	//auto vertices = wrap_vtkarray_tuple<3>( vtkpoints ); // slightly slower
+	auto vertices = wrap_vtkarray_tuple_rev<3>( vtkpoints );
+
+	auto edgeLength = edge_length_op(vertices);
+	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
+	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
+
+	int minCell = * orderedCells.begin();
+	int minCellEdges = Cell2EdgesTraits::getCellNumberOfEdges(cells,minCell);
+	std::cout<<"Cell with shortest edge is #"<<minCell<<" and has "<<minCellEdges<<" edges :\n";
+	for(int i=0;i<minCellEdges;i++)
 	{
-		cellPriorityTree.insert( i );
+		auto edge = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
+		std::cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 	}
-	unsigned int dmin=-1, dmax=0;
-	onika::algorithm::probe_btree_depth( cellPriorityTree.getRoot(), dmin, dmax );
-	std::cout<<"Tree depth in ["<<dmin<<","<<dmax<<"]\n";
-#endif
 
     std::cerr<<"\nDONE\n";
     return true;
