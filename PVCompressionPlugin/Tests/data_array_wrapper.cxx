@@ -24,7 +24,7 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 
 using onika::vtk::wrap_vtkarray;
 using onika::vtk::wrap_vtkarray_tuple;
-using onika::mesh::vertexDistance;
+using onika::mesh::edge_length_op;
 using std::cout;
 
 int main()
@@ -51,7 +51,9 @@ int main()
 	}
 	cout<<"\n\n";
 
-	cout<<"vertex distance (5,7) : "<< vertexDistance(myContainer,5,7) << "\n";
+	auto edgeLength = edge_length_op(myContainer);
+
+	cout<<"edge length (5,7) : "<< edgeLength(5,7) << "\n";
 
 	return 0;
 }

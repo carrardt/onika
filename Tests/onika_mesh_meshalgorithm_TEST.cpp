@@ -42,9 +42,13 @@ struct Mesh
 
 typedef onika::mesh::smesh_c2v_basic_traits< std::vector<int>, 3 > SMeshC2VBase;
 typedef onika::mesh::smesh_c2e_basic_traits<SMeshC2VBase> Cell2EdgesTraits;
-typedef onika::mesh::CellMinEdgeLengthCompare<Mesh::VertexContainer,Mesh::CellContainer,Cell2EdgesTraits> CellCompare;
-typedef onika::container::SequenceIterator<int> Sequence;
-using onika::mesh::edgeLength;
+using onika::mesh::edge_length_op;
+using onika::mesh::CellShortestEdge;
+using onika::container::SequenceIterator;
+
+template<class Integer, class CellCompare>
+inline auto ordered_cell_set(Integer nCells, CellCompare order)
+ONIKA_AUTO_RET( std::set<Integer,CellCompare>(SequenceIterator<Integer>(0), SequenceIterator<Integer>(nCells), order) )
 
 int main()
 {
@@ -61,15 +65,20 @@ int main()
 	Mesh mesh;
 	onika::vtk::readVtkAsciiMesh(ifile,mesh);
 	int ncells = SMeshC2VBase::getNumberOfCells(mesh.cells);
-	CellCompare shortestEdgeOrder( mesh.vertices, mesh.cells );
-	std::set<int,CellCompare> orderedCells( Sequence(0), Sequence(ncells), shortestEdgeOrder ) ;
+
+	//CellCompare shortestEdgeOrder( mesh.vertices, mesh.cells );
+
+	auto edgeLength = edge_length_op(mesh.vertices);
+	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( mesh.cells, edgeLength );
+	auto orderedCells = ordered_cell_set(ncells, shortestEdgeOrder);
+
 	int cell = * orderedCells.begin();
 	int nedges = Cell2EdgesTraits::getCellNumberOfEdges(mesh.cells,cell);
 	std::cout<<"Cell with ortest edge : "<<cell<<" has "<<nedges<<" edges :\n";
 	for(int i=0;i<nedges;i++)
 	{
 		auto edge = Cell2EdgesTraits::getCellEdge(mesh.cells,cell,i);
-		std::cout<<"edge "<<edge<<" length = "<<edgeLength(mesh.vertices,edge)<<"\n";
+		std::cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 	}
 	
 	std::cout<<"other cell ? "; std::cout.flush();
@@ -79,7 +88,7 @@ int main()
 	for(int i=0;i<nedges;i++)
 	{
 		auto edge = Cell2EdgesTraits::getCellEdge(mesh.cells,cell,i);
-		std::cout<<"edge "<<edge<<" length = "<<edgeLength(mesh.vertices,edge)<<"\n";
+		std::cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 	}	return 0;
 }
 

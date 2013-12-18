@@ -10,18 +10,17 @@
 #include "onika/tuple.h"
 #include "onika/mathfunc.h"
 #include "onika/language.h"  // ONIKA_AUTO_RET macro
-#include "onika/algorithm/rbtree.h"
-
-#include "vtkugridtetrawrapper.h"
-#include "vtkarraywrapper.h"
-
-#include <vtkUnstructuredGrid.h>
+#include "onika/container/sequence.h" // Sequence iterator
 
 #include <tuple>
 #include <string>
+#include <set>
 #include <iostream>
 #include <fstream>
 
+// VTK-onika bridge types
+#include "vtkugridtetrawrapper.h"
+#include "vtkarraywrapper.h"
 
 // VTK dependencies
 #include <vtkUnstructuredGrid.h>
@@ -29,7 +28,6 @@
 // TODO: progressively get rid of the need to buil types prior to use them.
 // everything would be much more readable and easy to use with in-function, auto declared variables
 // initialized with template functions.
-
 
 // Vertex-Cell 2-way connectivity
 typedef onika::container::ArrayWrapper<vtkIdType> MyCellContainer;
@@ -51,25 +49,14 @@ typedef onika::container::TupleVec<VertexCoordArray,VertexScalarArray> MyVertexC
 // Cell Values Adapter
 typedef onika::container::ArrayWrapper<double> MyCellValueContainer;
 
+// algorithms applied to mesh elements
+using onika::mesh::edge_length_op;
+using onika::mesh::CellShortestEdge;
+using onika::container::SequenceIterator;
 
-// specialization of vertexDistance method for my own vertex container
-// FIXME: is overloading of a common function the best way to define distance between vertices ?
-namespace onika { namespace mesh {
-
-// Vertices are tuples where first element is a 3-tuple storing vertex coordinates
-template<class IdType>
-inline auto vertexDistance( const MyVertexContainer& vertices, IdType a, IdType b )
-ONIKA_AUTO_RET( onika::math::distance( std::get<0>(vertices[a]), std::get<0>(vertices[b]) )   )
-
-} }
-
-// operator to compare cells according to their shortest edge's length
-typedef onika::mesh::CellMinEdgeLengthCompare<MyVertexContainer,MyCellContainer,MyC2EBasicTraits> MyCellShortestEdge;
-
-// positional binary tree to maintain cells sorted by contraction priority
-typedef onika::algorithm::TupleVectorBTree< std::vector< std::tuple<unsigned int,int,int> > > CellPriorityTreeBase;
-typedef onika::algorithm::BTree< CellPriorityTreeBase, MyCellShortestEdge, onika::algorithm::NodeRefT > CellPriorityTree;
-typedef typename CellPriorityTree::NodeRef CellPriorityNode;
+template<class Integer, class CellCompare>
+inline auto ordered_cell_set(Integer nCells, CellCompare order)
+ONIKA_AUTO_RET( std::set<Integer,CellCompare>(SequenceIterator<Integer>(0), SequenceIterator<Integer>(nCells), order) )
 
 // ostream operator for tuples
 template<class... T>
@@ -112,7 +99,6 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
 
 	// build vertices adapter
-
 
 #if 0
 	// build the comparison operator that sorts cells according to their shortest edge length

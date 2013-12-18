@@ -79,7 +79,14 @@ struct EdgeLengthOp
 	template<class IdType>
 	inline auto operator () ( const std::tuple<IdType,IdType>& edge ) const
 	ONIKA_AUTO_RET( onika::math::distance( vertices[std::get<0>(edge)] , vertices[std::get<1>(edge)] ) )
+
+	template<class IdType>
+	inline auto operator () ( const IdType& v1, const IdType& v2 ) const
+	ONIKA_AUTO_RET( onika::math::distance( vertices[v1] , vertices[v2] ) )
 };
+
+template<class VertexContainer>
+inline auto edge_length_op(const VertexContainer& v) ONIKA_AUTO_RET( EdgeLengthOp<VertexContainer>(v) )
 
 template<class c2e_traits, class EdgeLengthFunc>
 struct CellMinEdgeLengthCompare
