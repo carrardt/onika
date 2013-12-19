@@ -112,16 +112,37 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
 
+	for( auto c : orderedCells )
+	{
+		cout<<"cell "<<c<<" :";
+		int nCellEdges = Cell2EdgesTraits::getCellNumberOfEdges(cells,c);
+		for(int i=0;i<nCellEdges;i++)
+		{
+			auto edge = Cell2EdgesTraits::getCellEdge(cells,c,i);
+			cout<<" "<<edge;
+		}
+		cout<<"\n";
+	}
+
 	int minCell = * orderedCells.begin();
 	int minCellEdges = Cell2EdgesTraits::getCellNumberOfEdges(cells,minCell);
 	std::cout<<"Cell with shortest edge is #"<<minCell<<" and has "<<minCellEdges<<" edges :\n";
 	for(int i=0;i<minCellEdges;i++)
 	{
 		auto edge = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
-		std::cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
+//		auto edge2 = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
+//		if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
+		cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 	}
 
-    std::cerr<<"\nDONE\n";
+
+//	vtkIdType adjacentCells[64], nAdj=0;
+//	v2c.getEdgeAdjacentCells( std::get<0>(edge), std::get<1>(edge), adjacentCells,  nAdj );
+//	std::cout<<nAdj<<" edge adjacent cells : ";
+//	for(int i=0;i<nAdj;i++) { std::cout<<adjacentCells[i]<<' '; } std::cout<<"\n";
+
+
+    cout<<"\nDONE\n";
     return true;
 }
 
