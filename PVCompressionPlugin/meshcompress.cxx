@@ -84,7 +84,7 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	// build 2-way cell-vertex connectivity adpater
 	vtkIdType* cellsPtr = input->GetCells()->GetData()->GetPointer(0);
 	size_t cellsSize = input->GetCells()->GetData()->GetNumberOfTuples();
-	MyCellContainer cells = { cellsPtr, cellsSize, cellsSize };
+	MyCellContainer cells = { cellsPtr+1/*first is cell size*/, cellsSize, cellsSize };
 	vtkIdType nVerts = input->GetNumberOfPoints();
 	V2C v2c( cells, nVerts );
 	onika::debug::dbgassert( v2c.checkConsistency() );
