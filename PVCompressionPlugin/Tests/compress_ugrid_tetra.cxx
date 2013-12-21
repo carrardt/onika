@@ -65,8 +65,8 @@ int main(int argc, char* argv[])
 
 	vtkDataObject* data = reader->GetOutputDataObject(0);
 	if( data == 0 ) return 1;
-//	cout<<"OutputDataObject:\n";
-//	data->PrintSelf(cout,vtkIndent(0));
+	cout<<"\nOutputDataObject:\n";
+	data->PrintSelf(cout,vtkIndent(0));
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
 	if( ugrid == 0 ) return 1;

@@ -25,6 +25,7 @@
 // VTK dependencies
 #include <vtkUnstructuredGrid.h>
 #include <vtkFloatArray.h>
+#include <vtkPointData.h>
 
 // TODO: progressively get rid of the need to buil types prior to use them.
 // everything would be much more readable and easy to use with in-function, auto declared variables
@@ -111,7 +112,7 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	auto edgeLength = edge_length_op(vertices);
 	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
-
+#if 0
 	for( auto c : orderedCells )
 	{
 		cout<<"cell "<<c<<" :";
@@ -123,24 +124,47 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 		}
 		cout<<"\n";
 	}
+#endif
 
 	int minCell = * orderedCells.begin();
 	int minCellEdges = Cell2EdgesTraits::getCellNumberOfEdges(cells,minCell);
 	std::cout<<"Cell with shortest edge is #"<<minCell<<" and has "<<minCellEdges<<" edges :\n";
-	for(int i=0;i<minCellEdges;i++)
+	auto edge = Cell2EdgesTraits::getCellEdge(cells,minCell,0);
+	for(int i=1;i<minCellEdges;i++)
 	{
-		auto edge = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
-//		auto edge2 = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
-//		if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
-		cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
+		auto edge2 = Cell2EdgesTraits::getCellEdge(cells,minCell,i);
+		if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
 	}
+	cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 
+	vtkIdType adjacentCells[64], nAdj=0;
+	v2c.getEdgeAdjacentCells( std::get<0>(edge), std::get<1>(edge), adjacentCells,  nAdj );
+	std::cout<<nAdj<<" edge adjacent cells : ";
+	for(int i=0;i<nAdj;i++) { std::cout<<adjacentCells[i]<<' '; } std::cout<<"\n";
 
-//	vtkIdType adjacentCells[64], nAdj=0;
-//	v2c.getEdgeAdjacentCells( std::get<0>(edge), std::get<1>(edge), adjacentCells,  nAdj );
-//	std::cout<<nAdj<<" edge adjacent cells : ";
-//	for(int i=0;i<nAdj;i++) { std::cout<<adjacentCells[i]<<' '; } std::cout<<"\n";
+	// add scalars to vertices
+	vtkDataArray* vertexScalarsArray = input->GetPointData()->GetArray("Temp");
+	if( vertexScalarsArray == 0 )
+	{
+		cout<<"Point scalars not found\n";
+		return false;
+	}
+	vtkFloatArray * vertexScalarsFloatArray = vtkFloatArray::SafeDownCast( vertexScalarsArray );
+	if( vertexScalarsFloatArray == 0 )
+	{
+		cout<<"Point scalars is not a vtkFloatArray\n";
+		return false;
+	}
+	auto vertexScalars = wrap_vtkarray( vertexScalarsFloatArray );
+	cout<<"Vertex scalars:";
+	for( auto x : vertexScalars ) { cout<<' '<<x; }
+	cout<<"\n";
 
+	// wrap vertex and cell scalars, create output stream and start compressing
+        //onika::codec::AsciiStream out(ofile);
+        //onika::compress::smeshEdgeCollapseEncode( v2c, vertices, cellScalars, v, vb, out );
+
+        //onika::debug::dbgassert( v2c.checkConsistency() );
 
     cout<<"\nDONE\n";
     return true;
