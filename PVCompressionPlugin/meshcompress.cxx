@@ -11,6 +11,8 @@
 #include "onika/mathfunc.h"
 #include "onika/language.h"  // ONIKA_AUTO_RET macro
 #include "onika/container/sequence.h" // Sequence iterator
+#include "onika/codec/asciistream.h" 
+#include "onika/compress/edgecompress.h" 
 
 #include <tuple>
 #include <string>
@@ -194,13 +196,15 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 		return false;
 	}
 	auto cellScalars = wrap_vtkarray( cellTypedScalarsArray );
-	cout<<"Cell scalars:";
-	for( auto x : cellScalars ) { cout<<' '<<x; }
-	cout<<"\n";
+	//cout<<"Cell scalars:";
+	//for( auto x : cellScalars ) { cout<<' '<<x; }
+	//cout<<"\n";
 
 	// wrap vertex and cell scalars, create output stream and start compressing
-        //onika::codec::AsciiStream out(ofile);
-        //onika::compress::smeshEdgeCollapseEncode(v2c, verticesWithValues, cellScalars, edge, out);
+        onika::codec::AsciiStream out(ofile);
+	
+	cout<<"\n-------------- start compressing ----------------\n";
+        onika::compress::smeshEdgeCollapseEncode(v2c, verticesWithValues, cellScalars, edge, out);
 
         onika::debug::dbgassert( v2c.checkConsistency() );
 
