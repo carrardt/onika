@@ -25,6 +25,7 @@
 // VTK dependencies
 #include <vtkUnstructuredGrid.h>
 #include <vtkFloatArray.h>
+#include <vtkDoubleArray.h>
 #include <vtkPointData.h>
 
 // TODO: progressively get rid of the need to buil types prior to use them.
@@ -144,20 +145,23 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 
 	// add scalars to vertices
 	vtkDataArray* vertexScalarsArray = input->GetPointData()->GetArray("Temp");
+	cout<<"VertexScalars: "<<vertexScalarsArray->GetClassName()<<"\n";
 	if( vertexScalarsArray == 0 )
 	{
 		cout<<"Point scalars not found\n";
 		return false;
 	}
-	vtkFloatArray * vertexScalarsFloatArray = vtkFloatArray::SafeDownCast( vertexScalarsArray );
-	if( vertexScalarsFloatArray == 0 )
+	vtkDoubleArray * vertScalarsDouble = vtkDoubleArray::SafeDownCast( vertexScalarsArray );
+	if( vertScalarsDouble == 0 )
 	{
-		cout<<"Point scalars is not a vtkFloatArray\n";
+		cout<<"Point scalars is not a vtkDoubleArray\n";
 		return false;
 	}
-	auto vertexScalars = wrap_vtkarray( vertexScalarsFloatArray );
-	cout<<"Vertex scalars:";
-	for( auto x : vertexScalars ) { cout<<' '<<x; }
+	auto vertexScalars = wrap_vtkarray( vertScalarsDouble );
+	auto verticesWithValues = zip_vectors_cpy( vertices, vertexScalars );
+
+	cout<<"Vertices:";
+	for( auto x : verticesWithValues ) { cout<<' '<<x.get(); }
 	cout<<"\n";
 
 	// wrap vertex and cell scalars, create output stream and start compressing
