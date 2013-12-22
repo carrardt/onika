@@ -138,6 +138,21 @@ namespace onika { namespace compress {
 		smeshEdgeCollapseEncode( cvcon, vertices, mesh::vertex_lexical_order(vertices), cells, mesh::cell_lexical_order(cvcon,cells),a,b,out);
 	}
 	
+	template<
+		class CVConnectivy,
+		class VertexContainer,
+		class CellContainer,
+		class IdType,
+		class StreamT>    	
+	inline void smeshEdgeCollapseEncode(
+		CVConnectivy& cvcon,
+		VertexContainer& vertices,
+		CellContainer& cells,
+		std::tuple<IdType,IdType> edge,
+		StreamT& out)
+	{
+		smeshEdgeCollapseEncode( cvcon, vertices, mesh::vertex_lexical_order(vertices), cells, mesh::cell_lexical_order(cvcon,cells),std::get<0>(edge),std::get<1>(edge),out);
+	}
 
 
 } } // end of namespace
