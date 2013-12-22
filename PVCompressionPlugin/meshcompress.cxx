@@ -26,7 +26,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkFloatArray.h>
 #include <vtkDoubleArray.h>
+#include <vtkLongLongArray.h>
 #include <vtkPointData.h>
+#include <vtkCellData.h>
 
 // TODO: progressively get rid of the need to buil types prior to use them.
 // everything would be much more readable and easy to use with in-function, auto declared variables
@@ -62,6 +64,21 @@ inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t 
 	return out;
 }
 
+template<class T>
+inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t )
+{
+	out << t.get() ;
+	return out;
+}
+
+template<class T>
+inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t )
+{
+	out << t.get() ;
+	return out;
+}
+
+
 using namespace onika::vtk;
 
 bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, int nedges, const std::string& outputFileName)
@@ -94,6 +111,7 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	int nCells = v2c.getNumberOfCells();
 	std::cout<<v2c.getNumberOfVertices()<<" vertices, "<< v2c.getNumberOfCells()<<" cells, mem="<<v2c.getMemoryBytes()<<"\n";
 
+	// *********** wrap vertex coordinates ********************
 	// build vertices adapter
 	cout<<"Points: "<<input->GetPoints()->GetData()->GetClassName()<<"\n";
 	vtkFloatArray* vtkpoints = vtkFloatArray::SafeDownCast(input->GetPoints()->GetData());
@@ -106,10 +124,10 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	{
 		cout<<"Points array doesn't have 3 components\n";
 	}
-
 	//auto vertices = wrap_vtkarray_tuple<3>( vtkpoints ); // slightly slower
 	auto vertices = wrap_vtkarray_tuple_rev<3>( vtkpoints );
-
+	
+	// build edge length metric and shortest edge based cell ordering
 	auto edgeLength = edge_length_op(vertices);
 	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
@@ -143,7 +161,8 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	std::cout<<nAdj<<" edge adjacent cells : ";
 	for(int i=0;i<nAdj;i++) { std::cout<<adjacentCells[i]<<' '; } std::cout<<"\n";
 
-	// add scalars to vertices
+
+	// ************* add scalars to vertices ***********
 	vtkDataArray* vertexScalarsArray = input->GetPointData()->GetArray("Temp");
 	cout<<"VertexScalars: "<<vertexScalarsArray->GetClassName()<<"\n";
 	if( vertexScalarsArray == 0 )
@@ -160,15 +179,30 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	auto vertexScalars = wrap_vtkarray( vertScalarsDouble );
 	auto verticesWithValues = zip_vectors_cpy( vertices, vertexScalars );
 
-	cout<<"Vertices:";
-	for( auto x : verticesWithValues ) { cout<<' '<<x.get(); }
+	//cout<<"Vertices:";
+	//for( auto x : verticesWithValues ) { cout<<' '<<x; }
+	//cout<<"\n";
+
+
+	// ************* add cell scalars  ***********
+	vtkDataArray* cellScalarsArray = input->GetCellData()->GetArray("PedigreeElementId");
+	cout<<"cell scalars: "<<cellScalarsArray->GetClassName()<<"\n";
+	vtkLongLongArray* cellTypedScalarsArray = vtkLongLongArray::SafeDownCast(cellScalarsArray);
+	if( cellTypedScalarsArray == 0 )
+	{
+		cout<<"cell array is not a vtkIdTypeArray\n";
+		return false;
+	}
+	auto cellScalars = wrap_vtkarray( cellTypedScalarsArray );
+	cout<<"Cell scalars:";
+	for( auto x : cellScalars ) { cout<<' '<<x; }
 	cout<<"\n";
 
 	// wrap vertex and cell scalars, create output stream and start compressing
         //onika::codec::AsciiStream out(ofile);
-        //onika::compress::smeshEdgeCollapseEncode( v2c, vertices, cellScalars, v, vb, out );
+        //onika::compress::smeshEdgeCollapseEncode(v2c, verticesWithValues, cellScalars, edge, out);
 
-        //onika::debug::dbgassert( v2c.checkConsistency() );
+        onika::debug::dbgassert( v2c.checkConsistency() );
 
     cout<<"\nDONE\n";
     return true;
