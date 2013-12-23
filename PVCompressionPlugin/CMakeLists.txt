@@ -1,9 +1,11 @@
  # Locate ParaView build and then import CMake configuration, 
  # macros etc. from it.
- 
-FIND_PACKAGE(VTK REQUIRED)
-INCLUDE(${VTK_USE_FILE})
- 
+
+#FIND_PACKAGE(VTK REQUIRED)
+#INCLUDE(${VTK_USE_FILE})
+FIND_PACKAGE(ParaView REQUIRED)
+INCLUDE(${PARAVIEW_USE_FILE}) 
+
 add_subdirectory(Tests)
  
  # Use the ADD_PARAVIEW_PLUGIN macro to build a plugin

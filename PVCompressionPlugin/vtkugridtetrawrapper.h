@@ -4,9 +4,17 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellArray.h>
 #include <vtkIdTypeArray.h>
+#include <vtkCellData.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkDataArrayTemplate.h>
+
+#include <type_traits>
+
 #include "onika/mesh/cell2vertex.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
+#include "vtkarraywrapper.h"
 
 namespace onika { namespace vtk {
 
@@ -28,6 +36,31 @@ namespace onika { namespace vtk {
 	{
 		return allCellsAreSimplicies<3>(ugrid);
 	}
+
+	template<class T, unsigned int NC=1>
+	struct CellDataArray
+	{
+		std::string name;
+		inline CellDataArray(const std::string& n) : name(n) {}
+		inline auto wrap_array(vtkDataSet* grid)
+		ONIKA_AUTO_RET( wrap_vtkarray_selector<NC,T>( vtkDataArrayTemplate<T>::SafeDownCast(grid->GetCellData()->GetArray(name.c_str())) ) )
+	};
+
+	template<class T, unsigned int NC=1>
+	struct PointDataArray
+	{
+		std::string name;
+		inline PointDataArray(const std::string& n) : name(n) {}
+		inline auto wrap_array(vtkDataSet* grid)
+		ONIKA_AUTO_RET( wrap_vtkarray_selector<NC,T>( vtkDataArrayTemplate<T>::SafeDownCast(grid->GetPointData()->GetArray(name.c_str())) ) )
+	};
+
+	template<class T, unsigned int NC=3>
+	struct UGridPoints
+	{
+		inline auto wrap_array(vtkDataSet* grid)
+		ONIKA_AUTO_RET( wrap_vtkarray_selector<NC,T>( vtkDataArrayTemplate<T>::SafeDownCast(grid->GetPoints()) ) )
+	};
 
 } }
 

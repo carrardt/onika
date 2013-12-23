@@ -128,7 +128,7 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	}
 	//auto vertices = wrap_vtkarray_tuple<3>( vtkpoints ); // slightly slower
 	auto vertices = wrap_vtkarray_tuple_rev<3>( vtkpoints );
-	
+
 	// build edge length metric and shortest edge based cell ordering
 	auto edgeLength = edge_length_op(vertices);
 	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
