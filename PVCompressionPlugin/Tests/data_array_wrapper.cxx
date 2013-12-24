@@ -2,6 +2,7 @@
 #include "onika/mesh/meshalgorithm.h"
 #include <vtkDoubleArray.h>
 #include <iostream>
+#include <type_traits>
 
 template<class... T>
 inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
@@ -24,6 +25,8 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 
 using onika::vtk::wrap_vtkarray;
 using onika::vtk::wrap_vtkarray_tuple;
+using onika::vtk::wrap_vtkarray_tuple_rev;
+using onika::vtk::select_vtkarray_wrapper;
 using onika::mesh::edge_length_op;
 using std::cout;
 
@@ -37,7 +40,8 @@ int main()
 	doubleArray->FillComponent(2,0.3);
 	doubleArray->WritePointer(0,10);
 
-	auto myContainer = wrap_vtkarray_tuple<3>( doubleArray );
+	auto myContainer = select_vtkarray_wrapper( doubleArray, ONIKA_CONST(3) );
+	//auto myContainer = wrap_vtkarray_tuple<3>( doubleArray );
 	cout<<myContainer.size()<<" values: ";
 	for( auto x : myContainer ) { cout<<x<<" "; }
 	cout<<"\n\n";

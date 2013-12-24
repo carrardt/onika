@@ -8,6 +8,9 @@
 #define ONIKA_AUTO_RET(E...) -> decltype(E) { return E; }
 #define ONIKA_MAKE_SIGNED(T...) typename onika::language::MakeSigned<T>::type
 #define ONIKA_NOOP(x...) onika::language::noop(x)
+#define ONIKA_CONST(x) std::integral_constant<decltype(x),x>()
+
+
 namespace onika { namespace language {
 
 	template< typename _Tp, bool _IsInt=std::is_integral<_Tp>::value > struct MakeSigned;

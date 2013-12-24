@@ -6,6 +6,7 @@
 #include "onika/container/arraywrapper.h"
 #include "onika/container/tuplevec.h"
 #include "onika/language.h"
+#include <type_traits>
 
 namespace onika { namespace vtk {
 
@@ -32,9 +33,9 @@ struct ArrayWrapperSelector<T,1>
 	static inline auto wrap(vtkDataArrayTemplate<T>* array) ONIKA_AUTO_RET( wrap_vtkarray(array) )
 };
 
-template<class T,unsigned int NC>
-inline auto select_vtkarray_wrapper( vtkDataArrayTemplate<T>* dataArray )
-ONIKA_AUTO_RET( ArrayWrapperSelector<T,NC>( dataArray->GetPointer(0), dataArray->GetNumberOfTuples() ) )
+template<class T,int NC>
+inline auto select_vtkarray_wrapper( vtkDataArrayTemplate<T>* dataArray, std::integral_constant<int,NC> )
+ONIKA_AUTO_RET( ArrayWrapperSelector<T,NC>::wrap( dataArray ) )
 
 } }
 
