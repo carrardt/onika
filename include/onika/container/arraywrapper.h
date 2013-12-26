@@ -58,8 +58,8 @@ namespace onika { namespace container {
 		typedef typename std::reverse_iterator<iterator> reverse_iterator;
 
 		inline ArrayWrapper() : dataptr(0), datasize(0), datacapacity(0) {}
-		inline ArrayWrapper(T* p, size_t s) : dataptr(p), datasize(s), datacapacity(s) {}
-		inline ArrayWrapper(T* p, size_t s, size_t c) : dataptr(p), datasize(s), datacapacity(c) {}
+		inline ArrayWrapper(T* p, size_t s) : dataptr(p), datasize(s), datacapacity(s) { debug::dbgassert(p!=0); }
+		inline ArrayWrapper(T* p, size_t s, size_t c) : dataptr(p), datasize(s), datacapacity(c) { debug::dbgassert(p!=0); }
 
 		inline iterator begin() { return iterator(dataptr); }
 		inline iterator end() { return iterator(dataptr+size()*TupleStride); }
