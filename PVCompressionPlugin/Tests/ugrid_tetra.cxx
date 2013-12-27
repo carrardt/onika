@@ -67,9 +67,10 @@ int main(int argc, char* argv[])
 
 	cout<<nverts<<" vertices, "<< c2v.getNumberOfCells()<<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
 
-	auto vertexCoords = UGridPoints<float,3>().wrap(ugrid);
+//	ugrid->GetPointData()->GetArray("Temp")->PrintSelf(cout,vtkIndent(0));
+	auto vertices = zip_array_wrappers(ugrid, UGridPoints<float,3>(), DataSetAttribute<double,1,false>("Temp") );
 	cout<<"Vertices:";
-	for( auto x : vertexCoords ) { cout<<" "<<x; } cout<<"\n";
+	for( auto x : vertices ) { cout<<" "<<x; } cout<<"\n";
 
 	return 0;
 }
