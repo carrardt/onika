@@ -18,7 +18,7 @@
 
 namespace onika { namespace vtk {
 
-	template<unsigned int Dim>
+	template<int Dim>
 	inline bool allCellsAreSimplicies(vtkUnstructuredGrid* ugrid)
 	{
 		vtkIdType n = ugrid->GetNumberOfCells();
@@ -37,6 +37,12 @@ namespace onika { namespace vtk {
 		return allCellsAreSimplicies<3>(ugrid);
 	}
 
+	// connectivity wrapper. translates cell description to Onika's Simplicial Mesh View
+	template<class Container,int DIM>
+	auto wrap_ugrid_smesh_c2v( Container& cells, std::integral_constant<int,DIM> )
+	ONIKA_AUTO_RET( onika::mesh::C2VWrapper< onika::mesh::c2v_traits< onika::mesh::smesh_c2v_basic_traits<Container,DIM,1> > >(cells) )
+
+	// Wraps a vtkDataSetAttribute (CellData or PointData)'s array to an onika container view
 	template<class T, int NC, bool CellData>
 	struct DataSetAttribute
 	{
@@ -52,6 +58,7 @@ namespace onika { namespace vtk {
 		  )
 	};
 
+	// Wraps point coordinates to an onika container view
 	template<class T, int NC=3>
 	struct UGridPoints
 	{
@@ -63,32 +70,30 @@ namespace onika { namespace vtk {
 			)
 	};
 
+	// Wraps cell connectivity array to an onika container view
 	struct UGridCells
 	{
 		inline auto wrap(vtkUnstructuredGrid* grid) const ONIKA_AUTO_RET( wrap_vtkarray( grid->GetCells()->GetData() ) )
 	};
 
-	template<class Cells, class PointArrays , class CellArrays>
-	struct UGridSMesh // don't reference array wrappers, copy them
+
+	template<class CellsT, class PointArraysT , class CellArraysT>
+	struct UGridSMeshWrapper // don't reference array wrappers, copy them
 	{
-		Cells m_cell2vertex; // connectivity
-		CellArrays m_cellValues; // cell scalars
-		PointArrays m_vertices; // point position and scalars
-		inline UGridSMesh(const Cells& cells, const Points& points, const CellVaues& cellValues)
+		CellsT m_cell2vertex; // connectivity
+		CellArraysT m_cellValues; // cell scalars
+		PointArraysT m_vertices; // point position and scalars
+		inline UGridSMeshWrapper(const CellsT& cells, const PointArraysT& points, const CellArraysT& cellValues)
 		: m_cell2vertex(cells), m_vertices(points), m_cellValues(cellValues) {}
 	};
 
 	template<class Cells, class Points, class CellValues>
 	static inline auto wrap_ugrid_tetra(const Cells& cells, const Points& points, const CellValues& cellValues)
-	ONIKA_AUTO_RET( UGridSMesh<Cells,Points,CellValues>(cells,points,cellValues) )
+	ONIKA_AUTO_RET( UGridSMeshWrapper<Cells,Points,CellValues>(cells,points,cellValues) )
 
 	template<class... Wrappers>
 	static inline auto zip_array_wrappers( vtkUnstructuredGrid* grid, const Wrappers&... wrappers )
 	ONIKA_AUTO_RET( zip_vectors_cpy( wrappers.wrap(grid)... ) )
-
-	template<class Cells, class Points, class CellValues>
-	static inline auto wrap_vtk_ugrid_smesh(const Cells& cells, const Points& points, const CellVaues& cellValues)
-	ONIKA_AUTO_RET( UGridSMesh<Cells,Points,CellValues>(cells,points,cellValues) )
 
 } }
 

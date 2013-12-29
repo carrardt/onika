@@ -14,15 +14,15 @@ template<class T>
 inline auto wrap_vtkarray( vtkDataArrayTemplate<T>* dataArray )
 ONIKA_AUTO_RET( container::array_wrapper( dataArray->GetPointer(0), dataArray->GetNumberOfTuples() ) )
 
-template<unsigned int N,class T>
+template<int N,class T>
 inline auto wrap_vtkarray_tuple_rev( vtkDataArrayTemplate<T>* dataArray )
 ONIKA_AUTO_RET( container::array_wrapper( reinterpret_cast<onika::tuple::uniform_tuple<T,N>*>(dataArray->GetPointer(0)), dataArray->GetNumberOfTuples() ) )
 
-template<unsigned int N,class T>
+template<int N,class T>
 inline auto wrap_vtkarray_tuple( vtkDataArrayTemplate<T>* dataArray )
 ONIKA_AUTO_RET( container::flat_tuple_array_wrapper<N>( dataArray->GetPointer(0), dataArray->GetNumberOfTuples() ) )
 
-template<class T, unsigned int N=1>
+template<class T, int N=1>
 struct ArrayWrapperSelector
 {
 	static inline auto wrap(vtkDataArrayTemplate<T>* array) ONIKA_AUTO_RET( wrap_vtkarray_tuple_rev<N,T>(array) )
