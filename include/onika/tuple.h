@@ -148,39 +148,38 @@ namespace onika { namespace tuple {
 	// ======== apply =============
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, int... I>
-	auto apply( Tuple& x, Func f, indices<I...> ignored )
-	ONIKA_AUTO_RET( ONIKA_NOOP( f(std::get<I>(x)) ... ) )
+	void apply_subset( Tuple& x, Func f, indices<I...> ignored )
+	{ ONIKA_NOOP( ONIKA_RETURN_0(f)(std::get<I>(x)) ... ); }
 
 	template<class Func, class... T>
-	auto apply( std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( apply(x,f,make_indices<sizeof...(T)>()) )
+	void apply( std::tuple<T...>& x, Func f )
+	{ apply_subset(x,f,make_indices<sizeof...(T)>()); }
 
 	template<class Tuple, class Func, int... I>
-	auto apply_indexed( Tuple& x, Func f, indices<I...> ignored )
-	ONIKA_AUTO_RET( ONIKA_NOOP( f(I,std::get<I>(x)) ... ) )
+	void apply_indexed_subset( Tuple& x, Func f, indices<I...> ignored )
+	{ ONIKA_NOOP( ONIKA_RETURN_0(f)(I,std::get<I>(x)) ... ); }
 
 	template<class Func, class... T>
-	auto apply_indexed( std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( apply_indexed(x,f,make_indices<sizeof...(T)>()) )
+	void apply_indexed( std::tuple<T...>& x, Func f )
+	{ apply_indexed_subset(x,f,make_indices<sizeof...(T)>()); }
+
+	template<class Tuple, class Func, int... I>
+	void apply_indexed_subset( const Tuple& x, Func f, indices<I...> ignored )
+	{ ONIKA_NOOP( ONIKA_RETURN_0(f)(I,std::get<I>(x)) ... ); }
+
+	template<class Func, class... T>
+	void apply_indexed( const std::tuple<T...>& x, Func f )
+	{ apply_indexed_subset(x,f,make_indices<sizeof...(T)>()); }
 
 	// ============ map ==================
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, int... I>
-	auto map( const Tuple& x, Func f, indices<I...> ignored )
+	auto map_subset( const Tuple& x, Func f, indices<I...> ignored )
 	ONIKA_AUTO_RET( std::make_tuple( f(std::get<I>(x)) ... ) )
 
 	template<class Func, class... T>
 	auto map( const std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( map(x,f,make_indices<sizeof...(T)>()) )
-
-	// map function to a subset of tuple elements referenced by their indices
-	template<class Tuple, class Func, int... I>
-	auto map_indexed( const Tuple& x, Func f, indices<I...> ignored )
-	ONIKA_AUTO_RET( std::make_tuple( f(I,std::get<I>(x)) ... ) )
-
-	template<class Func, class... T>
-	auto map_indexed( const std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( map_indexed(x,f,make_indices<sizeof...(T)>()) )
+	ONIKA_AUTO_RET( map_subset(x,f,make_indices<sizeof...(T)>()) )
 
 	// ============== zip  ==============
 	template<class T1, class T2, int... I>
@@ -221,39 +220,13 @@ namespace onika { namespace tuple {
 	// =============== print ==================
 	// ========================================
 
-	template<class T> struct PrintTuple;
-
-	template<class StreamT, class... T>
-	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
-
-	template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
-	{
-		onika::tuple::print( out, t ); return out;
-	}
+	template<class StreamT> struct PrintTupleOp;
 
 	template<class T> struct PrintTuple
 	{
 		template<class StreamT>
-		static inline StreamT& print( StreamT& out, const T& x ) { out << x; return out; }
+		static inline void print( StreamT& out, const T& x ) { out << x; }
 	};
-
-	template<> struct PrintTuple< std::tuple<> >
-	{
-		template<class StreamT>
-		static inline StreamT& print( StreamT& out, const std::tuple<>& x ) { return out; }
-	};
-
-	template<class T> struct PrintTuple< std::tuple<T> >
-	{
-		template<class StreamT>
-		static inline StreamT& print( StreamT& out, const std::tuple<T>& x)
-		{
-			out << std::get<0>(x) ;
-			return out;
-		}
-	};
-
-	template<class StreamT> struct PrintTupleOp;
 
 	template<class... T> struct PrintTuple< std::tuple<T...> >
 	{
@@ -261,8 +234,8 @@ namespace onika { namespace tuple {
 		static inline StreamT& print( StreamT& out, const std::tuple<T...>& x )
 		{
 			out<< '(';
-			apply(x,PrintTupleOp<StreamT>(out),make_indices<sizeof...(T)-1>());
-			out << std::get<sizeof...(T)-1>(x) << ')';
+			apply_indexed( x, PrintTupleOp<StreamT>(out) );
+			out << ')';
 			return out;
 		}
 	};
@@ -271,16 +244,21 @@ namespace onika { namespace tuple {
 	struct PrintTupleOp
 	{
 		inline PrintTupleOp(StreamT& s) : out(s) {}
-		template<class T> inline StreamT& operator () ( const T& x ) const
+		template<class T> inline void operator () ( int i, const T& x ) const
 		{
+			if(i!=0) { out<<','; }
 			PrintTuple<T>::print(out,x);
-			out<< ',';
-			return out;
 		}
 		StreamT& out;
 	};
 
-//	inline auto print_tuple_element_op(StreamT& s, )
+	template<class StreamT, class... T>
+	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
+
+	template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
+	{
+		onika::tuple::print( out, t ); return out;
+	}
 
 } }
 

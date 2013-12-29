@@ -29,21 +29,8 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 }
 
 using namespace onika::vtk;
-using onika::tuple::map_indexed;
 using std::cout;
 
-struct PrefixTupleElementsOp
-{
-	template<class T>
-	inline auto operator () ( int i, const T& x ) const ONIKA_AUTO_RET( std::make_tuple(i,x) )
-};
-struct TupleIndicesOp
-{
-	template<class T>
-	inline auto operator () ( int i, const T& x ) const ONIKA_AUTO_RET( i )
-};
-static const PrefixTupleElementsOp  prefix_elements;
-static const TupleIndicesOp tuple_indices;
 int main(int argc, char* argv[])
 {
 	if( argc<2 ) return 1;
@@ -96,28 +83,6 @@ int main(int argc, char* argv[])
 			, DataSetAttribute<double,1,false>("H2")
 			);
 	cout<<ugrid->GetPointData()->GetArray("H2")->GetClassName()<<"\n";
-
-	for(int i=0;i<3;i++)
-	{
-		cout<<"Vertex "<<i<<"\n";
-		cout<<"\t.0 "<<std::get<0>(vertices[i].get()) <<"\n";
-		cout<<"\t.1 "<< std::get<1>(vertices[i].get()) <<"\n";
-		cout<<"\t.2 "<< std::get<2>(vertices[i].get()) <<"\n";
-		cout<<"\t.3 "<< std::get<3>(vertices[i].get()) <<"\n";
-		cout<<"\t.4 "<< std::get<4>(vertices[i].get()) <<"\n";
-		cout<<"\t.5 "<< std::get<5>(vertices[i].get()) <<"\n";
-		cout<<"\t.6 "<< std::get<6>(vertices[i].get()) <<"\n";
-		cout<<"\t.7 "<< std::get<7>(vertices[i].get()) <<"\n";
-		cout<<"\t.8 "<< std::get<8>(vertices[i].get()) <<"\n";
-		cout<<"\t.9 "<< std::get<9>(vertices[i].get()) <<"\n";
-		cout<<"\tall:"<<vertices[i].get() <<"\n";
-		auto indices =  map_indexed( vertices[i].get() , tuple_indices );
-		cout<<"\tindices:"<<indices<<"\n";
-		auto t = map_indexed( vertices[i].get() , prefix_elements );
-		cout<<"\tall_i:"<< t <<"\n";
-	}
-//	cout<<"Vertices:";
-//	for( auto x : vertices ) { cout<<x<<" "; } cout<<"\n";
 
 	return 0;
 }
