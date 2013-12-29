@@ -59,7 +59,8 @@ int main(int argc, char* argv[])
 
 	vtkIdType nverts = ugrid->GetNumberOfPoints();
 	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
-	onika::debug::dbgassert( c2v.checkConsistency(nverts) );
+	auto v2c = make_v2c( c2v , nverts );
+	onika::debug::dbgassert( v2c.checkConsistency() );
 
 	cout<<nverts<<" vertices, "<< c2v.getNumberOfCells()<<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
 

@@ -12,6 +12,7 @@
 #include <type_traits>
 
 #include "onika/mesh/cell2vertex.h"
+#include "onika/mesh/vertex2cell.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
 #include "vtkarraywrapper.h"
@@ -39,8 +40,13 @@ namespace onika { namespace vtk {
 
 	// connectivity wrapper. translates cell description to Onika's Simplicial Mesh View
 	template<class Container,int DIM>
-	auto wrap_ugrid_smesh_c2v( Container& cells, std::integral_constant<int,DIM> )
+	inline auto wrap_ugrid_smesh_c2v( Container& cells, std::integral_constant<int,DIM> )
 	ONIKA_AUTO_RET( onika::mesh::C2VWrapper< onika::mesh::c2v_traits< onika::mesh::smesh_c2v_basic_traits<Container,DIM,1> > >(cells) )
+
+	// TODO: improve ReverseC2V construtor to admit additional containers taken with &&
+	template<class C2V, class Integer>
+	inline auto make_v2c( C2V& c2v, Integer nVerts )
+	ONIKA_AUTO_RET( onika::mesh::ReverseC2V<C2V,std::vector<int>,std::vector<unsigned int> >(c2v.c2v,nVerts) )
 
 	// Wraps a vtkDataSetAttribute (CellData or PointData)'s array to an onika container view
 	template<class T, int NC, bool CellData>
