@@ -171,6 +171,42 @@ namespace onika { namespace tuple {
 	void apply_indexed( const std::tuple<T...>& x, Func f )
 	{ apply_indexed_subset(x,f,make_indices<sizeof...(T)>()); }
 
+	// this guarantees sequential application of f on tuple elements from 0 ton N-1
+	template<int N> struct SApplyHelper
+	{
+		template<class Func, class... T>
+		static inline void sapply_indexed(const std::tuple<T...>& t, Func f)
+		{ SApplyHelper<N-1>::sapply_indexed(t,f); f(N-1,std::get<N-1>(t)); }
+
+		template<class Func, class... T>
+		static inline void sapply(const std::tuple<T...>& t, Func f)
+		{ SApplyHelper<N-1>::sapply(t,f); f(std::get<N-1>(t)); }
+	};
+	template<> struct SApplyHelper<1>
+	{
+		template<class Func, class... T>
+		static inline void sapply_indexed(const std::tuple<T...>& t, Func f)
+		{ f(0,std::get<0>(t)); }
+
+		template<class Func, class... T>
+		static inline void sapply(const std::tuple<T...>& t, Func f)
+		{ f(std::get<0>(t)); }
+	};
+	template<> struct SApplyHelper<0>
+	{
+		template<class Func, class T> static inline void sapply_indexed(const T& t, Func f) {}
+		template<class Func, class T> static inline void sapply(const T& t, Func f) {}
+	};
+
+	template<class Func, class... T>
+	void sapply_indexed( const std::tuple<T...>& x, Func f )
+	{ SApplyHelper<sizeof...(T)>::sapply_indexed(x,f); }
+
+	template<class Func, class... T>
+	void sapply( const std::tuple<T...>& x, Func f )
+	{ SApplyHelper<sizeof...(T)>::sapply(x,f); }
+
+
 	// ============ map ==================
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, int... I>
@@ -234,7 +270,7 @@ namespace onika { namespace tuple {
 		static inline StreamT& print( StreamT& out, const std::tuple<T...>& x )
 		{
 			out<< '(';
-			apply_indexed( x, PrintTupleOp<StreamT>(out) );
+			sapply_indexed( x, PrintTupleOp<StreamT>(out) );
 			out << ')';
 			return out;
 		}
