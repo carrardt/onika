@@ -101,7 +101,12 @@ struct smesh_c2e_basic_traits
 		v2 = c2v_traits::getCellVertexId(c,cell,v2);
 		return std::make_tuple(v1,v2);
 	}
+
 };
+
+template<class c2v_wrapper>
+static inline auto make_smesh_c2e_traits(c2v_wrapper c2v)
+ONIKA_AUTO_RET( smesh_c2e_basic_traits<typename c2v_wrapper::traits>() )
 
 } } // namspace onika
 

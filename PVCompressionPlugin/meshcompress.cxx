@@ -54,10 +54,6 @@ using onika::mesh::edge_length_op;
 using onika::mesh::CellShortestEdge;
 using onika::container::SequenceIterator;
 
-template<class Integer, class CellCompare>
-inline auto ordered_cell_set(Integer nCells, CellCompare order)
-ONIKA_AUTO_RET( std::set<Integer,CellCompare>(SequenceIterator<Integer>(0), SequenceIterator<Integer>(nCells), order) )
-
 // ostream operator for tuples
 template<class... T>
 inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )

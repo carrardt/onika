@@ -4,6 +4,8 @@
 #include "onika/tuple.h"
 #include "onika/language.h"
 #include "onika/mathfunc.h"
+#include "onika/container/sequence.h"
+#include <set>
 
 namespace onika { namespace mesh {
 
@@ -69,7 +71,7 @@ template<typename Vector>
 inline IndexedValueCompare<Vector> indexed_value_compare(const Vector&v) { return IndexedValueCompare<Vector>(v); }
 
 // operator that returns an edge length given 2 vertex indices
-template<class VertexContainer>
+template<class VertexContainer, class ValueType=typename VertexContainer::value_type>
 struct EdgeLengthOp
 {
 	const VertexContainer& vertices;
@@ -83,6 +85,25 @@ struct EdgeLengthOp
 	template<class IdType>
 	inline auto operator () ( const IdType& v1, const IdType& v2 ) const
 	ONIKA_AUTO_RET( onika::math::distance( vertices[v1] , vertices[v2] ) )
+};
+
+template<class VertexContainer, class... FirstElementTupleTypes, class... OtherTypes>
+struct EdgeLengthOp<VertexContainer, std::tuple< std::tuple<FirstElementTupleTypes...>,OtherTypes...> >
+{
+	const VertexContainer& vertices;
+	using value_type = typename VertexContainer::value_type;
+
+	inline EdgeLengthOp(const VertexContainer& v) : vertices(v) {}
+
+	template<class IdType>
+	inline auto operator () ( const std::tuple<IdType,IdType>& edge ) const
+	ONIKA_AUTO_RET( (*this)(std::get<0>(edge),std::get<1>(edge)) )
+
+	template<class IdType>
+	inline auto operator () ( const IdType& v1, const IdType& v2 ) const
+	ONIKA_AUTO_RET( onika::math::distance(
+		  std::get<0>( static_cast<value_type>(vertices[v1]) )
+		, std::get<0>( static_cast<value_type>(vertices[v2]) ) ) )
 };
 
 template<class VertexContainer>
@@ -129,6 +150,14 @@ struct CellShortestEdge
 	static inline auto less(const typename c2e_traits::ContainerType& cells, const EdgeLengthFunc& el)
 	ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2e_traits,EdgeLengthFunc>(cells,el) )
 };
+
+template<class c2e_traits, class EdgeLengthFunc>
+static inline auto cell_shortest_edge_less( const typename c2e_traits::ContainerType& cells, const EdgeLengthFunc& el, c2e_traits ignored )
+ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2e_traits,EdgeLengthFunc>(cells,el) )
+
+template<class Integer, class CellCompare, class SetT = std::set<Integer,CellCompare> >
+inline auto ordered_cell_set(Integer nCells, CellCompare order)
+ONIKA_AUTO_RET( SetT(container::SequenceIterator<Integer>(0), container::SequenceIterator<Integer>(nCells), order) )
 
 } } // end of namespace
 
