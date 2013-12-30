@@ -10,12 +10,14 @@ struct AddOne
 
 ONIKA_USE_TUPLE_OSTREAM
 
-template<int... I>
-static inline void print_indices( onika::tuple::indices<I...> ignored )
+struct print_tuple_index
 {
-	ONIKA_NOOP( (std::cout<<I<<' ') ... );
-	std::cout<<'\n';
-}
+	template<class T>
+	inline void operator () ( int i, const T& x ) const
+	{
+		std::cout<<i<<' ';
+	}
+};
 
 int main()
 {
@@ -24,14 +26,14 @@ int main()
 	const char* z="Hello";
 	int w[10] = {0,1,2,3,4,5,6,7,8,9};
 
-	print_indices<0,1,2,3,4>( onika::tuple::make_indices<5>() );
-
 	auto num = std::make_tuple(3,5,0.2);
 	std::cout<<"is_arithmetic( (3,5,0.2) ) = "<< std::is_arithmetic< decltype(num) >::value <<"\n";
 	auto alnum = std::make_tuple(3,"AA");
 	std::cout<<"is_arithmetic( (3,'AA') ) = "<< std::is_arithmetic< decltype(alnum) >::value <<"\n";
 
 	std::cout<< num <<"\n";
+	onika::tuple::sapply_indexed(num,print_tuple_index());
+	std::cout<<"\n";
 
 	//std::cout<<"norm(3.5)="<<onika::math::norm(3.5)<<"\n";
 	//std::cout<<"norm((3,4))="<<onika::math::norm(std::make_tuple(3,4))<<"\n";
