@@ -49,16 +49,14 @@ namespace onika { namespace vtk {
 	ONIKA_AUTO_RET( onika::mesh::ReverseC2V<C2V,std::vector<int>,std::vector<unsigned int> >(c2v.c2v,nVerts) )
 
 	// Wraps a vtkDataSetAttribute (CellData or PointData)'s array to an onika container view
-	template<class T, int NC, bool CellData>
+	template<class T, int NC, bool CellData,int AI>
 	struct DataSetAttribute
 	{
-		std::string name;
-		inline DataSetAttribute(const std::string& n) : name(n) {}
 		inline auto wrap(vtkUnstructuredGrid * ds) const ONIKA_AUTO_RET(
 		  select_vtkarray_wrapper(
 			vtkDataArrayTemplate<T>::FastDownCast(
 			  (CellData?vtkDataSetAttributes::SafeDownCast(ds->GetCellData()):vtkDataSetAttributes::SafeDownCast(ds->GetPointData()))
-			  ->GetArray(name.c_str()) ) ,
+			  ->GetArray(AI) ) ,
 			ONIKA_CONST(NC)
 			)
 		  )

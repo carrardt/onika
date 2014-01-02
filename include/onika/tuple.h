@@ -31,6 +31,7 @@ namespace onika { namespace tuple {
 	template<int... I>
 	struct indices {
 		using next = indices<I..., sizeof...(I)>;
+		static constexpr int count = sizeof...(I);
 	};
 
 	template<int Size>
@@ -42,6 +43,13 @@ namespace onika { namespace tuple {
 		using type = indices<>;
 	};
 	template<int N> using make_indices = typename BuildIndices<N>::type;
+
+	// ================= Type tuple place holder =====================
+	template<class... T>
+	struct types
+	{
+		static constexpr int count = sizeof...(T);
+	};
 
 
 	// ======================== Tuple type check =======================

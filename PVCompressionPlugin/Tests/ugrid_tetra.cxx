@@ -6,6 +6,7 @@
 #include "onika/mesh/meshalgorithm.h"
 #include "onika/container/sequence.h"
 #include "onika/debug/dbgassert.h"
+#include "onika/language.h"
 
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
@@ -31,14 +32,51 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 	return out;
 }
 
-using namespace onika::vtk;
-using std::cout;
 
-// algorithms applied to mesh elements
+using std::cout;
+using namespace onika::vtk;
 using onika::mesh::edge_length_op;
 using onika::mesh::cell_shortest_edge_less;
 using onika::mesh::make_smesh_c2e;
 using onika::mesh::ordered_cell_set;
+using onika::tuple::indices;
+using onika::tuple::make_indices;
+using onika::tuple::types;
+
+template<
+	class VT, int VS, class CT, class CS, class PT, class PS,
+	bool Valid=((CT::count==CS::count)&&(PT::count==PS::count))
+	>
+struct UGridWrapper {};
+
+template<class VT, int VS, class CT, class CS, class PT, class PS>
+struct UGridWrapper<VT,VS,CT,CS,PT,PS,true>
+{
+	vtkUnstructuredGrid* ugrid;
+	static constexpr int NCA = CT::count;
+	static constexpr int NPA = PT::count;
+
+	inline UGridWrapper(vtkDataObject* obj)
+	{
+		ugrid = vtkUnstructuredGrid::SafeDownCast(obj);
+		onika::debug::dbgassert(ugrid != 0);
+		onika::debug::dbgassert(allCellsAreTetras(ugrid));
+	}
+
+	template<class... T, int ... S, int... I>
+	inline auto cellValues_aux( types<T...> arrayTypes, indices<S...> arrayTupleSizes, indices<I...> arrayIndices )
+	ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,true,I>().wrap(ugrid))... ) )
+
+	inline auto cellValues() ONIKA_AUTO_RET( cellValues_aux(CT(),CS(),make_indices<NCA>()) )
+
+	template<class... T, int ... S, int... I>
+	inline auto vertices_aux( types<T...> arrayTypes, indices<S...> arrayTupleSizes, indices<I...> arrayIndices )
+	ONIKA_AUTO_RET( zip_vectors_cpy( UGridPoints<VT,VS>().wrap(ugrid), (DataSetAttribute<T,S,false,I>().wrap(ugrid))... ) )
+
+	inline auto vertices() ONIKA_AUTO_RET( vertices_aux(PT(),PS(),make_indices<NPA>()) )
+};
+
+#define UGRID_DESC float,3,types<long,long,int>,indices<1,1,1>,types<long,long,double,double,double,double,double,double,double>,indices<1,1,1,3,1,1,1,1,1>
 
 int main(int argc, char* argv[])
 {
@@ -52,8 +90,10 @@ int main(int argc, char* argv[])
 
 	vtkDataObject* data = reader->GetOutputDataObject(0);
 	if( data == 0 ) return 1;
-//	cout<<"OutputDataObject:\n";
-//	data->PrintSelf(cout,vtkIndent(0));
+	cout<<"OutputDataObject:\n";
+	data->PrintSelf(cout,vtkIndent(0));
+
+	UGridWrapper<UGRID_DESC> wrapper( data );
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
 	if( ugrid == 0 ) return 1;
@@ -65,26 +105,8 @@ int main(int argc, char* argv[])
 	}
 
 	// wrap cell values
-	auto cellValues = zip_array_wrappers(ugrid
-			,DataSetAttribute<long,1,true>("GlobalElementId")
-			,DataSetAttribute<long,1,true>("PedigreeElementId")
-			,DataSetAttribute<int,1,true>("ObjectId")
-			);
-
-	// wrap vertex positions together with other values
-//	ugrid->GetPointData()->GetArray("Temp")->PrintSelf(cout,vtkIndent(0));
-	auto vertices = zip_array_wrappers(ugrid
-			, UGridPoints<float,3>()
-			, DataSetAttribute<long,1,false>("GlobalNodeId")
-			, DataSetAttribute<long,1,false>("PedigreeNodeId")
-			, DataSetAttribute<double,1,false>("Temp")
-			, DataSetAttribute<double,3,false>("V")
-			, DataSetAttribute<double,1,false>("Pres")
-			, DataSetAttribute<double,1,false>("AsH3")
-			, DataSetAttribute<double,1,false>("GaMe3")
-			, DataSetAttribute<double,1,false>("CH4")
-			, DataSetAttribute<double,1,false>("H2")
-			);
+	auto cellValues = wrapper.cellValues();
+	auto vertices = wrapper.vertices();
 
 	auto cells = UGridCells().wrap(ugrid);
 	vtkIdType nverts = ugrid->GetNumberOfPoints();
