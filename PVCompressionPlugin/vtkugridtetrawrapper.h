@@ -16,6 +16,8 @@
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
 #include "vtkarraywrapper.h"
+#include "onika/language.h"
+#include "onika/tuple.h"
 
 namespace onika { namespace vtk {
 
@@ -82,24 +84,39 @@ namespace onika { namespace vtk {
 		 	)
 	};
 
+	template<
+		class VT, int VS, class CT, class CS, class PT, class PS,
+		bool Valid=((CT::count==CS::count)&&(PT::count==PS::count))
+		>
+	struct UGridWrapper {};
 
-	template<class CellsT, class PointArraysT , class CellArraysT>
-	struct UGridSMeshWrapper // don't reference array wrappers, copy them
+	template<class VT, int VS, class CT, class CS, class PT, class PS>
+	struct UGridWrapper<VT,VS,CT,CS,PT,PS,true>
 	{
-		CellsT m_cell2vertex; // connectivity
-		CellArraysT m_cellValues; // cell scalars
-		PointArraysT m_vertices; // point position and scalars
-		inline UGridSMeshWrapper(const CellsT& cells, const PointArraysT& points, const CellArraysT& cellValues)
-		: m_cell2vertex(cells), m_vertices(points), m_cellValues(cellValues) {}
+		vtkUnstructuredGrid* ugrid;
+		static constexpr int NCA = CT::count;
+		static constexpr int NPA = PT::count;
+
+		inline UGridWrapper(vtkDataObject* obj)
+		{
+			ugrid = vtkUnstructuredGrid::SafeDownCast(obj);
+			onika::debug::dbgassert(ugrid != 0);
+			onika::debug::dbgassert(allCellsAreTetras(ugrid));
+		}
+
+	private:
+		template<class... T, int ... S, int... I>
+		inline auto vertices_aux( tuple::types<T...> , tuple::indices<S...> , tuple::indices<I...> )
+		ONIKA_AUTO_RET( zip_vectors_cpy( UGridPoints<VT,VS>().wrap(ugrid), (DataSetAttribute<T,S,false,I>().wrap(ugrid))... ) )
+		template<class... T, int ... S, int... I>
+		inline auto cellValues_aux( tuple::types<T...> , tuple::indices<S...> , tuple::indices<I...> )
+		ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,true,I>().wrap(ugrid))... ) )
+	public:
+		inline auto cellValues() ONIKA_AUTO_RET( cellValues_aux(CT(),CS(),tuple::make_indices<NCA>()) )
+		inline auto vertices() ONIKA_AUTO_RET( vertices_aux(PT(),PS(),tuple::make_indices<NPA>()) )
+		inline auto cells() ONIKA_AUTO_RET( UGridCells().wrap(ugrid) )
 	};
 
-	template<class Cells, class Points, class CellValues>
-	static inline auto wrap_ugrid_tetra(const Cells& cells, const Points& points, const CellValues& cellValues)
-	ONIKA_AUTO_RET( UGridSMeshWrapper<Cells,Points,CellValues>(cells,points,cellValues) )
-
-	template<class... Wrappers>
-	static inline auto zip_array_wrappers( vtkUnstructuredGrid* grid, const Wrappers&... wrappers )
-	ONIKA_AUTO_RET( zip_vectors_cpy( wrappers.wrap(grid)... ) )
 
 } }
 

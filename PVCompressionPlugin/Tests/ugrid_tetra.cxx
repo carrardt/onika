@@ -40,41 +40,7 @@ using onika::mesh::cell_shortest_edge_less;
 using onika::mesh::make_smesh_c2e;
 using onika::mesh::ordered_cell_set;
 using onika::tuple::indices;
-using onika::tuple::make_indices;
 using onika::tuple::types;
-
-template<
-	class VT, int VS, class CT, class CS, class PT, class PS,
-	bool Valid=((CT::count==CS::count)&&(PT::count==PS::count))
-	>
-struct UGridWrapper {};
-
-template<class VT, int VS, class CT, class CS, class PT, class PS>
-struct UGridWrapper<VT,VS,CT,CS,PT,PS,true>
-{
-	vtkUnstructuredGrid* ugrid;
-	static constexpr int NCA = CT::count;
-	static constexpr int NPA = PT::count;
-
-	inline UGridWrapper(vtkDataObject* obj)
-	{
-		ugrid = vtkUnstructuredGrid::SafeDownCast(obj);
-		onika::debug::dbgassert(ugrid != 0);
-		onika::debug::dbgassert(allCellsAreTetras(ugrid));
-	}
-
-	template<class... T, int ... S, int... I>
-	inline auto cellValues_aux( types<T...> arrayTypes, indices<S...> arrayTupleSizes, indices<I...> arrayIndices )
-	ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,true,I>().wrap(ugrid))... ) )
-
-	inline auto cellValues() ONIKA_AUTO_RET( cellValues_aux(CT(),CS(),make_indices<NCA>()) )
-
-	template<class... T, int ... S, int... I>
-	inline auto vertices_aux( types<T...> arrayTypes, indices<S...> arrayTupleSizes, indices<I...> arrayIndices )
-	ONIKA_AUTO_RET( zip_vectors_cpy( UGridPoints<VT,VS>().wrap(ugrid), (DataSetAttribute<T,S,false,I>().wrap(ugrid))... ) )
-
-	inline auto vertices() ONIKA_AUTO_RET( vertices_aux(PT(),PS(),make_indices<NPA>()) )
-};
 
 #define UGRID_DESC float,3,types<long,long,int>,indices<1,1,1>,types<long,long,double,double,double,double,double,double,double>,indices<1,1,1,3,1,1,1,1,1>
 
@@ -104,16 +70,17 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// wrap cell values
-	auto cellValues = wrapper.cellValues();
-	auto vertices = wrapper.vertices();
+	// wrap mesh arrays
+	auto cellValues = wrapper.cellValues(); // cell centered values
+	auto vertices = wrapper.vertices(); // vertex position and values
+	auto cells = wrapper.cells(); // cell-to-vertex connectivity
 
-	auto cells = UGridCells().wrap(ugrid);
 	vtkIdType nverts = ugrid->GetNumberOfPoints();
+	vtkIdType nCells = ugrid->GetNumberOfCells();
+
 	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
 	auto v2c = make_v2c( c2v , nverts );
 	onika::debug::dbgassert( v2c.checkConsistency() );
-	int nCells = c2v.getNumberOfCells();
 	cout<<nverts<<" vertices, "<<nCells <<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
 
 	// build edge length metric and shortest edge based cell ordering
