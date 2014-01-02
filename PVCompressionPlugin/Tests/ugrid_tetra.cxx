@@ -36,9 +36,8 @@ using std::cout;
 
 // algorithms applied to mesh elements
 using onika::mesh::edge_length_op;
-using onika::mesh::CellShortestEdge;
-using onika::container::SequenceIterator;
-using onika::mesh::make_smesh_c2e_traits;
+using onika::mesh::cell_shortest_edge_less;
+using onika::mesh::make_smesh_c2e;
 using onika::mesh::ordered_cell_set;
 
 int main(int argc, char* argv[])
@@ -48,13 +47,13 @@ int main(int argc, char* argv[])
 	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
 	reader->SetFileName(argv[1]);
 	reader->Update();
-	cout<<"Reader:\n";
-	reader->PrintSelf(cout,vtkIndent(0));
+//	cout<<"Reader:\n";
+//	reader->PrintSelf(cout,vtkIndent(0));
 
 	vtkDataObject* data = reader->GetOutputDataObject(0);
 	if( data == 0 ) return 1;
-	cout<<"OutputDataObject:\n";
-	data->PrintSelf(cout,vtkIndent(0));
+//	cout<<"OutputDataObject:\n";
+//	data->PrintSelf(cout,vtkIndent(0));
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
 	if( ugrid == 0 ) return 1;
@@ -100,13 +99,28 @@ int main(int argc, char* argv[])
 	// edge_length_op takes the first element and compute the distance based on the first element only.
 	// this is why it is important to place vertex coordinates first in the vertex definition
 	auto edgeLength = edge_length_op(vertices);
-	auto c2e_traits = make_smesh_c2e_traits(c2v);
-	auto shortestEdgeOrder = cell_shortest_edge_less( cells, edgeLength, c2e_traits );
+	auto c2e = make_smesh_c2e(c2v);
+	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
 	auto edge = std::tuple<vtkIdType,vtkIdType>( 461, 467 );
 	cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 
+	auto maxEdgeLen = edgeLength(edge);
+
+	for(auto i : orderedCells)
+	{
+		int ne = c2e.getCellNumberOfEdges(i);
+//		cout<<"Cell "<<i<<" has "<<ne<<" edges";
+		for(int e=0;e<ne;e++)
+		{
+			auto edge = c2e.getCellEdge(i,e);
+			auto len = edgeLength(edge);
+			if( len > maxEdgeLen ) maxEdgeLen = len;
+			//cout<<"\t"<<edge<<" : len="<<edgeLength(edge)<<"\n";
+		}
+	}
 	cout<< "Cell with shortest edge is "<< ( * orderedCells.begin() )<< "\n";
+	cout<< "longest edge length = "<<maxEdgeLen<< "\n";
 
 	return 0;
 }

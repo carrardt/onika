@@ -3,6 +3,7 @@
 
 #include "onika/debug/dbgassert.h"
 #include "onika/codec/encoding.h"
+#include "onika/mesh/cell2edge.h"
 
 namespace onika { namespace mesh {
 
@@ -105,8 +106,8 @@ struct smesh_c2e_basic_traits
 };
 
 template<class c2v_wrapper>
-static inline auto make_smesh_c2e_traits(c2v_wrapper c2v)
-ONIKA_AUTO_RET( smesh_c2e_basic_traits<typename c2v_wrapper::traits>() )
+static inline auto make_smesh_c2e(c2v_wrapper c2v)
+ONIKA_AUTO_RET( C2EWrapper<smesh_c2e_basic_traits<typename c2v_wrapper::traits> >(c2v.c2v) )
 
 } } // namspace onika
 

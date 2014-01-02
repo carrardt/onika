@@ -79,7 +79,9 @@ namespace onika { namespace vtk {
 	// Wraps cell connectivity array to an onika container view
 	struct UGridCells
 	{
-		inline auto wrap(vtkUnstructuredGrid* grid) const ONIKA_AUTO_RET( wrap_vtkarray( grid->GetCells()->GetData() ) )
+		inline auto wrap(vtkUnstructuredGrid* g) const ONIKA_AUTO_RET(
+			container::array_wrapper( g->GetCells()->GetData()->GetPointer(1), g->GetCells()->GetData()->GetNumberOfTuples() )
+		 	)
 	};
 
 

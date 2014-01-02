@@ -51,7 +51,7 @@ typedef onika::container::ArrayWrapper<double> MyCellValueContainer;
 
 // algorithms applied to mesh elements
 using onika::mesh::edge_length_op;
-using onika::mesh::CellShortestEdge;
+using onika::mesh::make_smesh_c2e;
 using onika::container::SequenceIterator;
 
 // ostream operator for tuples
@@ -127,7 +127,8 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 
 	// build edge length metric and shortest edge based cell ordering
 	auto edgeLength = edge_length_op(vertices);
-	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( cells, edgeLength );
+	auto c2e = make_smesh_c2e(v2c);
+	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
 #if 0
 	for( auto c : orderedCells )
@@ -197,12 +198,11 @@ bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, in
 	//cout<<"\n";
 
 	// wrap vertex and cell scalars, create output stream and start compressing
-        onika::codec::AsciiStream out(ofile);
+    onika::codec::AsciiStream out(ofile);
 	
 	cout<<"\n-------------- start compressing ----------------\n";
-        onika::compress::smeshEdgeCollapseEncode(v2c, verticesWithValues, cellScalars, edge, out);
-
-        onika::debug::dbgassert( v2c.checkConsistency() );
+    onika::compress::smeshEdgeCollapseEncode(v2c, verticesWithValues, cellScalars, edge, out);
+    onika::debug::dbgassert( v2c.checkConsistency() );
 
     cout<<"\nDONE\n";
     return true;

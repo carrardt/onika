@@ -109,52 +109,45 @@ struct EdgeLengthOp<VertexContainer, std::tuple< std::tuple<FirstElementTupleTyp
 template<class VertexContainer>
 inline auto edge_length_op(const VertexContainer& v) ONIKA_AUTO_RET( EdgeLengthOp<VertexContainer>(v) )
 
-template<class c2e_traits, class EdgeLengthFunc>
+template<class c2ewrapper, class EdgeLengthFunc>
 struct CellMinEdgeLengthCompare
 {
-	using CellContainer = typename c2e_traits::ContainerType;
+	using CellContainer = typename c2ewrapper::ContainerType;
 
-	inline CellMinEdgeLengthCompare(const CellContainer& _c, const EdgeLengthFunc& el) : cells(_c), edgeLength(el) {}
+	inline CellMinEdgeLengthCompare(const c2ewrapper& _c2e, const EdgeLengthFunc& el) : c2e(_c2e), edgeLength(el) {}
 
 	template<class IdType>
 	inline bool operator () ( IdType cellA, IdType cellB ) const
 	{
 		if( cellA == cellB ) return false;
-		IdType nedgesA = c2e_traits::getCellNumberOfEdges(cells,cellA);
-		IdType nedgesB = c2e_traits::getCellNumberOfEdges(cells,cellB);
+		IdType nedgesA = c2e.getCellNumberOfEdges(cellA);
+		IdType nedgesB = c2e.getCellNumberOfEdges(cellB);
 		if( nedgesA <= 0 ) return false;
 		if( nedgesB <= 0 ) return true;
-		auto edge = c2e_traits::getCellEdge(cells,cellB,0);
+		auto edge = c2e.getCellEdge(cellB,0);
 		auto elen = edgeLength(edge);
 		for(IdType e=1;e<nedgesB;++e)
 		{
-			auto l = edgeLength( c2e_traits::getCellEdge(cells,cellB,e) );
+			auto l = edgeLength( c2e.getCellEdge(cellB,e) );
 			if( l < elen ) elen = l;
 		}
 		for(IdType e=0;e<nedgesA;++e)
 		{
-			auto l = edgeLength( c2e_traits::getCellEdge(cells,cellA,e) );
+			auto l = edgeLength( c2e.getCellEdge(cellA,e) );
 			if( l < elen ) return true;
 		}
 		return false;
 	}
 
-	const CellContainer& cells;
+	const c2ewrapper& c2e;
 	EdgeLengthFunc edgeLength;
 };
 
-template<class c2e_traits>
-struct CellShortestEdge
-{
-	template<class EdgeLengthFunc>
-	static inline auto less(const typename c2e_traits::ContainerType& cells, const EdgeLengthFunc& el)
-	ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2e_traits,EdgeLengthFunc>(cells,el) )
-};
+template<class c2ewrapper, class EdgeLengthFunc>
+static inline auto cell_shortest_edge_less( const c2ewrapper& c2e, const EdgeLengthFunc& el )
+ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2ewrapper,EdgeLengthFunc>(c2e,el) )
 
-template<class c2e_traits, class EdgeLengthFunc>
-static inline auto cell_shortest_edge_less( const typename c2e_traits::ContainerType& cells, const EdgeLengthFunc& el, c2e_traits ignored )
-ONIKA_AUTO_RET( CellMinEdgeLengthCompare<c2e_traits,EdgeLengthFunc>(cells,el) )
-
+// TODO: move in another include, too generic
 template<class Integer, class CellCompare, class SetT = std::set<Integer,CellCompare> >
 inline auto ordered_cell_set(Integer nCells, CellCompare order)
 ONIKA_AUTO_RET( SetT(container::SequenceIterator<Integer>(0), container::SequenceIterator<Integer>(nCells), order) )

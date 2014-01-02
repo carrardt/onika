@@ -12,6 +12,7 @@
 #include "onika/mesh/simplicialmesh.h"
 #include "onika/container/sequence.h"
 #include "onika/tuple.h"
+#include "onika/mesh/cell2edge.h"
 
 ONIKA_USE_MATH;
 ONIKA_USE_TUPLE_OSTREAM
@@ -43,8 +44,8 @@ struct Mesh
 typedef onika::mesh::smesh_c2v_basic_traits< std::vector<int>, 3 > SMeshC2VBase;
 typedef onika::mesh::smesh_c2e_basic_traits<SMeshC2VBase> Cell2EdgesTraits;
 using onika::mesh::edge_length_op;
-using onika::mesh::CellShortestEdge;
 using onika::container::SequenceIterator;
+using onika::mesh::C2EWrapper;
 
 int main()
 {
@@ -65,7 +66,8 @@ int main()
 	//CellCompare shortestEdgeOrder( mesh.vertices, mesh.cells );
 
 	auto edgeLength = edge_length_op(mesh.vertices);
-	auto shortestEdgeOrder = CellShortestEdge<Cell2EdgesTraits>::less( mesh.cells, edgeLength );
+	auto c2e = C2EWrapper<Cell2EdgesTraits>(mesh.cells);
+	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
 	auto orderedCells = ordered_cell_set(ncells, shortestEdgeOrder);
 
 	int cell = * orderedCells.begin();

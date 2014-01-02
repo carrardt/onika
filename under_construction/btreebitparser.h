@@ -55,7 +55,7 @@ struct BTreeParser
 		stack[i] &= ~mask;
 		stack[i] |= mask;
 	}
-	inline void getState() { return  }
+	inline void getState() { }
 
 	template<typename BTreeCursor>
 	inline bool toNextNode( SearchMode sm, BTreeCursor& bt )

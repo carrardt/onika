@@ -14,6 +14,7 @@ template<class T>
 inline auto wrap_vtkarray( vtkDataArrayTemplate<T>* dataArray )
 ONIKA_AUTO_RET( container::array_wrapper( dataArray->GetPointer(0), dataArray->GetNumberOfTuples() ) )
 
+// dangerous, do not use !
 template<int N,class T>
 inline auto wrap_vtkarray_tuple_rev( vtkDataArrayTemplate<T>* dataArray )
 ONIKA_AUTO_RET( container::array_wrapper( reinterpret_cast<onika::tuple::uniform_tuple<T,N>*>(dataArray->GetPointer(0)), dataArray->GetNumberOfTuples() ) )
