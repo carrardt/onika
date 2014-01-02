@@ -39,10 +39,12 @@ using onika::mesh::edge_length_op;
 using onika::mesh::cell_shortest_edge_less;
 using onika::mesh::make_smesh_c2e;
 using onika::mesh::ordered_cell_set;
-using onika::tuple::indices;
 using onika::tuple::types;
 
-#define UGRID_DESC float,3,types<long,long,int>,indices<1,1,1>,types<long,long,double,double,double,double,double,double,double>,indices<1,1,1,3,1,1,1,1,1>
+template<int... I>
+using integers = onika::tuple::indices<I...>;
+
+#define UGRID_DESC float,3,types<long,long,int>,integers<1,1,1>,types<long,long,double,double,double,double,double,double,double>,integers<1,1,1,3,1,1,1,1,1>
 
 int main(int argc, char* argv[])
 {
