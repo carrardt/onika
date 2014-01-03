@@ -5,9 +5,6 @@ include_directories(".." "${CMAKE_CURRENT_BINARY_DIR}")
 add_executable(data_array_wrapper_TEST data_array_wrapper.cxx)
 target_link_libraries(data_array_wrapper_TEST ${VTK_LIBRARIES})
 
-add_executable(genugriddesc genugriddesc.cxx)
-target_link_libraries(genugriddesc ${VTK_LIBRARIES})
-
 add_custom_target(generate_test_data_desc
 				  genugriddesc "${TEST_UGRID_FILE}" "testdata.h" " \#define UGRID_DESC "
 				  DEPENDS genugriddesc)

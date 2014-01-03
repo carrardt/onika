@@ -93,12 +93,6 @@ namespace onika { namespace container {
 namespace onika { namespace codec {
 
 	template<typename _Q> inline auto
-	wavelet_enc(container::QuantizedVector<_Q>& c, size_t a,size_t b) -> BoundedValue<int64_t>
-	{
-		return wavelet_enc(c.data,a,b); // si la reconstruction sans perte n'est pas garantie, n'est-ce pas dangereux ?
-	}
-
-	template<typename _Q> inline auto
 	value_enc(container::QuantizedVector<_Q>& c, size_t i)
 	ONIKA_AUTO_RET( value_enc(c.data,i) )
 

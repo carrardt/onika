@@ -87,12 +87,16 @@ namespace onika { namespace tuple {
 	template <class T1> struct TupleHelperSelector
 	{
 		template<class T2> static inline bool all_equal(const T1& t1, const T2& t2) { return t1 == t2; }
+		template<class T2> static inline bool all_less_or_equal(const T1& t1, const T2& t2) { return t1 <= t2; }
 		template<class T2> static inline bool lexical_order(const T1& t1, const T2& t2) { return t1 < t2; }
 	};
 	template <class... T1> struct TupleHelperSelector< std::tuple<T1...> >
 	{
 		template<class T2> static inline bool all_equal(const std::tuple<T1...>& t1, const T2& t2)
 		{ return TupleHelper<sizeof...(T1)>::all_equal(t1,t2); }
+
+		template<class T2> static inline bool all_less_or_equal(const std::tuple<T1...>& t1, const T2& t2)
+		{ return TupleHelper<sizeof...(T1)>::all_less_or_equal(t1,t2); }
 
 		template<class T2> static inline bool lexical_order(const std::tuple<T1...>& t1, const T2& t2)
 		{ return TupleHelper<sizeof...(T1)>::lexical_order(t1,t2); }
@@ -101,6 +105,9 @@ namespace onika { namespace tuple {
 	// ========== sorting & ordering =======
 	template<class T1, class T2>
 	inline bool all_equal( const T1& x1, const T2& x2 ) { return TupleHelperSelector<T1>::all_equal(x1,x2); }
+
+	template<class T1, class T2>
+	inline bool all_less_or_equal( const T1& x1, const T2& x2 ) { return TupleHelperSelector<T1>::all_less_or_equal(x1,x2); }
 
 	template<class T1, class T2>
 	inline bool lexical_order( const T1& x1, const T2& x2 ) { return TupleHelperSelector<T1>::lexical_order(x1,x2); }
@@ -114,6 +121,12 @@ namespace onika { namespace tuple {
 		static inline bool all_equal(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
 		{
 			return TupleHelper<N-1>::all_equal(t1,t2) && tuple::all_equal( std::get<N-1>(t1), std::get<N-1>(t2) );
+		}
+
+		template<class... Types1, class... Types2>
+		static inline bool all_less_or_equal(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
+		{
+			return TupleHelper<N-1>::all_less_or_equal(t1,t2) && tuple::all_less_or_equal( std::get<N-1>(t1), std::get<N-1>(t2) );
 		}
 
 		template<class... Types1, class... Types2>
@@ -135,6 +148,12 @@ namespace onika { namespace tuple {
 		}
 
 		template<class... Types1, class... Types2>
+		static inline bool all_less_or_equal(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
+		{
+			return tuple::all_less_or_equal( std::get<0>(t1), std::get<0>(t2) );
+		}
+
+		template<class... Types1, class... Types2>
 		static inline bool lexical_order(const std::tuple<Types1...>& t1 , const std::tuple<Types2...>& t2)
 		{
 			return tuple::lexical_order( std::get<0>(t1), std::get<0>(t2) );
@@ -143,14 +162,9 @@ namespace onika { namespace tuple {
 
 	template<> struct TupleHelper<0>
 	{
-		static inline bool all_equal(const std::tuple<>& t1 , const std::tuple<>& t2)
-		{
-			return true;
-		}
-		static inline bool lexical_order(const std::tuple<>& t1 , const std::tuple<>& t2)
-		{
-			return false;
-		}
+		static inline bool all_equal(const std::tuple<>& t1 , const std::tuple<>& t2) { return true; }
+		static inline bool all_less_or_equal(const std::tuple<>& t1 , const std::tuple<>& t2) { return true; }
+		static inline bool lexical_order(const std::tuple<>& t1 , const std::tuple<>& t2) { return false;	}
 	};
 
 	// ======== apply =============
@@ -218,12 +232,12 @@ namespace onika { namespace tuple {
 	// ============ map ==================
 	// map function to a subset of tuple elements referenced by their indices
 	template<class Tuple, class Func, int... I>
-	auto map_subset( const Tuple& x, Func f, indices<I...> ignored )
+	auto map( const Tuple& x, Func f, indices<I...> ignored )
 	ONIKA_AUTO_RET( std::make_tuple( f(std::get<I>(x)) ... ) )
 
 	template<class Func, class... T>
 	auto map( const std::tuple<T...>& x, Func f )
-	ONIKA_AUTO_RET( map_subset(x,f,make_indices<sizeof...(T)>()) )
+	ONIKA_AUTO_RET( map(x,f,make_indices<sizeof...(T)>()) )
 
 	// ============== zip  ==============
 	template<class T1, class T2, int... I>

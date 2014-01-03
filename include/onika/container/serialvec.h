@@ -101,26 +101,6 @@ namespace onika { namespace container {
 
 
 //==========================================
-//=== codec method specialization        ===
-//==========================================
-#include "onika/codec/types.h"
-#include "onika/codec/encoding.h"
-namespace onika { namespace codec {
-
-	template<typename _B, unsigned int _N> inline auto 
-	wavelet_enc(container::SerialVec<_B,_N>& c, size_t a,size_t b)
-	-> Vec< _N , BoundedValue< ONIKA_MAKE_SIGNED(typename _B::value_type) > >
-	{
-		Vec< _N , BoundedValue< ONIKA_MAKE_SIGNED(typename _B::value_type) > > r;
-		for(int i=0;i<_N;++i) { r[i] = wavelet_enc(c.data,a*_N+i,b*_N+i); }
-		return r;
-	}
-
-} } // end of onika::codec
-
-
-
-//==========================================
 //=== STL algorithm specialization       ===
 //==========================================
 #include <algorithm>

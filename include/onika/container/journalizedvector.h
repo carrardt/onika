@@ -214,26 +214,6 @@ namespace onika { namespace container {
 
 
 //==========================================
-//=== codec method specialization        ===
-//==========================================
-#include "onika/codec/types.h"
-#include "onika/codec/encoding.h"
-namespace onika { namespace codec {
-
-	template<typename _B,typename _W,typename _I> inline auto 
-	wavelet_enc(container::JournalizedVector<_B,_W,_I>& c, size_t a,size_t b)
-	-> BoundedValue< typename std::make_signed< typename container::JournalizedVector<_B,_W,_I>::WriteBuffer::value_type >::type >
-	{
-		c.touch(a);
-		c.touch(b);
-		return wavelet_enc( c.m_buffer, c.m_indices[a] - c._mcount , c.m_indices[b] - c._mcount );
-	}
-
-} } // end of onika::codec
-
-
-
-//==========================================
 //=== STL algorithm specialization       ===
 //==========================================
 #include <algorithm>

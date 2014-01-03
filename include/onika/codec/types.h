@@ -3,6 +3,7 @@
 
 #include "onika/debug/dbgassert.h"
 #include "onika/debug/dbgmessage.h"
+#include "onika/mathfunc.h"
 
 namespace onika { namespace codec {
 
@@ -77,10 +78,10 @@ namespace onika { namespace codec {
 	inline BoundedValue<T2>
 	bounded_delta(const T& avg, const T2& delta, const T& low, const T& high)
 	{
-		debug::dbgassert(avg>=low);
-		debug::dbgassert(avg<=high);
-		T2 dlow = low - avg;
-		T2 dhigh = high - avg;
+		debug::dbgassert( tuple::all_less_or_equal(low,avg) );
+		debug::dbgassert( tuple::all_less_or_equal(avg,high) );
+		T2 dlow = onika::math::sub( low , avg );
+		T2 dhigh = onika::math::sub( high , avg );
 		return BoundedValue<T2>( delta, dlow, dhigh );
 	}
 

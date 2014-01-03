@@ -5,6 +5,7 @@
 #include "onika/codec/types.h"
 #include "onika/container/algorithm.h"
 #include "onika/language.h"
+#include "onika/mathfunc.h"
 
 namespace onika { namespace codec { 
 
@@ -90,39 +91,6 @@ namespace onika { namespace codec {
 		return it;		
 	}
 
-	// (!) Read carefully :
-	// for integer case, lossless reconstruction is guaranteed for a only
-	// b's least significant bit will be faulty
-	// specialization toward multicomponent values (tuples,Vec,etc.) should be done
-	template<typename IntType>
-	inline void wavelet_enc(IntType a, IntType b, IntType& avg, ONIKA_MAKE_SIGNED(IntType) &delta)
-	{
-		avg = ( a + b ) / 2;
-		delta = avg - a;
-	}
-
-	template<typename IntType>
-	inline void wavelet_dec(IntType avg, ONIKA_MAKE_SIGNED(IntType) delta, IntType& a, IntType &b)
-	{
-		b = avg + delta;
-		a = avg - delta;
-	}
-
-	template<typename IntType>
-	inline void wavelet_delta_bounds(IntType avg, IntType low, IntType high,
-				ONIKA_MAKE_SIGNED(IntType) delta, 
-				ONIKA_MAKE_SIGNED(IntType) &dlow, 
-				ONIKA_MAKE_SIGNED(IntType) &dhigh )
-	{
-		IntType lowRange = avg-low;
-		IntType highRange = high-avg;
-		IntType range = (lowRange>highRange) ? lowRange : highRange;
-		dlow = -range;
-		dhigh = range;
-	}
-
-
-
 	/* ============================================
 	 * === container aware encoding operations ====
 	 * ============================================
@@ -137,29 +105,6 @@ namespace onika { namespace codec {
 // signed version of container element value type
 #define CSignedValue ONIKA_MAKE_SIGNED(typename _C::value_type)
 
-	/* Function : wavelet_enc
-	 * Parameters :
-	 * 	c : container
-	 * 	a : position of first element
-	 * 	b : position of second element
-	 * Notes:
-	 * container modifying encoding method
-	 * store average value of elements a and b into element a, and encodes (b-a)/2
-	 * optimally, this should allow a lossless reconstruction.
-	 */
-	template<typename _C> inline auto
-	wavelet_enc( _C& c, size_t a, size_t b) -> BoundedValue<CSignedValue>
-	{
-		CValue Min = container::min_value(c);
-		CValue Max = container::max_value(c);
-		CValue va = c[a];
-		CValue vb = c[b];
-		CValue avg;
-		CSignedValue delta;
-		wavelet_enc(va,vb,avg,delta);
-		c[a] = avg;
-		return bounded_delta(avg,delta,Min,Max);
-	}
 
 	/* Function : value_enc
 	 * Parameters :
@@ -185,7 +130,7 @@ namespace onika { namespace codec {
 	{
 		CValue va = c[a];
 		CValue vb = c[b];
-		CValue delta = vb - va;
+		CValue delta = onika::math::sub( vb , va );
 		return bounded_delta(va,delta,Min,Max);
 	}
 

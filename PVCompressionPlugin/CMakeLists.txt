@@ -11,6 +11,9 @@ else(${BUILD_PARAVIEW_PLUGIN})
 	INCLUDE(${VTK_USE_FILE})
 endif(${BUILD_PARAVIEW_PLUGIN})
 
+add_executable(genugriddesc genugriddesc.cxx)
+target_link_libraries(genugriddesc ${VTK_LIBRARIES})
+
 add_subdirectory(Tests)
 
 IF(${BUILD_PARAVIEW_PLUGIN}) 

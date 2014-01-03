@@ -71,7 +71,7 @@ int main()
 		//cout<<x<<" -> "<<a<<","<<b<<" -> "<<y<<endl;
 		onika::debug::dbgassert(y==x);		
 	}
-
+/*
 	cout<<"uint wavelet : "; cout.flush();
 	for(int nbits=4;nbits<=64;nbits++)
 	{
@@ -111,7 +111,7 @@ int main()
 	cout<<"avg="<<da<<", delta="<<db<<endl;
 	onika::codec::wavelet_dec(da,db,da,db);
 	cout<<"a="<<da<<", b="<<db<<endl;
-
+*/
 	return 0;
 }
 
