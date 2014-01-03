@@ -13,26 +13,6 @@
 #include <vtkFloatArray.h>
 #include <vtkDataArrayTemplate.h>
 
-template<class... T>
-inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
-{
-	onika::tuple::print( out, t );
-	return out;
-}
-template<class T>
-inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t )
-{
-	out << t.get() ;
-	return out;
-}
-template<class T>
-inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t )
-{
-	out << t.get() ;
-	return out;
-}
-
-
 using std::cout;
 using namespace onika::vtk;
 using onika::mesh::edge_length_op;
@@ -43,6 +23,13 @@ using onika::tuple::types;
 
 template<int... I>
 using integers = onika::tuple::indices<I...>;
+
+// convinient operators for std::stream
+template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
+template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t ) { out << t.get(); return out; }
+template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t ) { out << t.get(); return out; }
+
+
 
 // definition of unstructured grid to pass test on
 #include "testdata.h"

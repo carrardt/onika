@@ -16,5 +16,6 @@ add_executable(ugrid_tetra_TEST ugrid_tetra.cxx)
 add_dependencies(ugrid_tetra_TEST generate_test_data_desc)
 target_link_libraries(ugrid_tetra_TEST ${VTK_LIBRARIES})
 
-add_executable(compress_ugrid_tetra_TEST compress_ugrid_tetra.cxx ../meshcompress.cxx)
+add_executable(compress_ugrid_tetra_TEST compress_ugrid_tetra.cxx)
+add_dependencies(compress_ugrid_tetra_TEST generate_test_data_desc)
 target_link_libraries(compress_ugrid_tetra_TEST ${VTK_LIBRARIES})

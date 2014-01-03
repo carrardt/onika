@@ -278,7 +278,7 @@ namespace onika { namespace tuple {
 		static inline StreamT& print( StreamT& out, const std::tuple<T...>& x )
 		{
 			out<< '(';
-			sapply_indexed( x, PrintTupleOp<StreamT>(out) );
+			onika::tuple::sapply_indexed( x, onika::tuple::PrintTupleOp<StreamT>(out) );
 			out << ')';
 			return out;
 		}
@@ -291,13 +291,13 @@ namespace onika { namespace tuple {
 		template<class T> inline void operator () ( int i, const T& x ) const
 		{
 			if(i!=0) { out<<','; }
-			PrintTuple<T>::print(out,x);
+			onika::tuple::PrintTuple<T>::print(out,x);
 		}
 		StreamT& out;
 	};
 
 	template<class StreamT, class... T>
-	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return PrintTuple<std::tuple<T...> >::print(out,t); }
+	inline StreamT& print(StreamT& out, const std::tuple<T...>& t ) { return onika::tuple::PrintTuple<std::tuple<T...> >::print(out,t); }
 
 	template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t )
 	{

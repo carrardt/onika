@@ -19,7 +19,6 @@ IF(${BUILD_PARAVIEW_PLUGIN})
 	   Onika
 	   "1.0"
 	   SERVER_MANAGER_XML Onika.xml
-	   SOURCES meshcompress.cxx
 	   SERVER_MANAGER_SOURCES vtkOnikaWriter.cxx
 	   )
 ENDIF(${BUILD_PARAVIEW_PLUGIN})

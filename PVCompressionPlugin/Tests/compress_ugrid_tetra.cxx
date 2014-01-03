@@ -1,21 +1,38 @@
 #include "vtkugridtetrawrapper.h"
 #include "vtkarraywrapper.h"
 #include "onika/mesh/cell2vertex.h"
+#include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
+#include "onika/mesh/meshalgorithm.h"
+#include "onika/container/sequence.h"
 #include "onika/debug/dbgassert.h"
+#include "onika/language.h"
+#include "onika/codec/asciistream.h"
+#include "onika/compress/edgecompress.h"
 
 #include <vtkUnstructuredGrid.h>
 #include <vtkXMLUnstructuredGridReader.h>
+#include <vtkFloatArray.h>
+#include <vtkDataArrayTemplate.h>
 #include <sys/time.h>
 
-bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, int nedges, const std::string& outputFileName);
-
-using namespace onika::vtk;
 using std::cout;
+using namespace onika::vtk;
+using onika::mesh::edge_length_op;
+using onika::mesh::cell_shortest_edge_less;
+using onika::mesh::make_smesh_c2e;
+using onika::mesh::ordered_cell_set;
+using onika::tuple::types;
 
-template<class Container>
-auto wrap_vtk_tetrahedral_mesh_c2v( Container& cells )
-ONIKA_AUTO_RET( onika::mesh::C2VWrapper< onika::mesh::c2v_traits< onika::mesh::smesh_c2v_basic_traits<Container,3,1> > >(cells) )
+template<int... I>
+using integers = onika::tuple::indices<I...>;
+
+// convinient operators for std::stream
+template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
+template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t ) { out << t.get(); return out; }
+template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t ) { out << t.get(); return out; }
+
+#include "testdata.h"
 
 int main(int argc, char* argv[])
 {
@@ -24,7 +41,6 @@ int main(int argc, char* argv[])
 	std::cout<<"seeding with "<<seed<<"\n";
 	srand( seed );
 
-	std::string fname="/dev/stdin";
 	std::string outfname="/dev/stdout";
 	int nedges = 1;
 
@@ -35,37 +51,27 @@ int main(int argc, char* argv[])
 			++i;
 			nedges = atoi(argv[i]);
 		}
-		else if( std::string(argv[i]) == "-i" )
-		{
-			++i; fname = argv[i];
-		}
 		else if( std::string(argv[i]) == "-o" )
 		{
 			++i; outfname = argv[i];
 		}
 	}
 
-	std::cout<<"input = "<<fname<<"\n";
 	std::cout<<"output = "<<outfname<<"\n";
 	std::cout<<"edges = "<<nedges<<"\n";
 
-	std::ifstream ifile(fname.c_str());
-	if( !ifile )
-	{
-		std::cerr<<"Failed to open "<<fname<<"\n";
-		return 1;
-	}
-
 	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
-	reader->SetFileName(argv[1]);
+	reader->SetFileName(UGRID_FILE);
 	reader->Update();
-	cout<<"Reader:\n";
-	reader->PrintSelf(cout,vtkIndent(0));
+//	cout<<"Reader:\n";
+//	reader->PrintSelf(cout,vtkIndent(0));
 
 	vtkDataObject* data = reader->GetOutputDataObject(0);
 	if( data == 0 ) return 1;
-	cout<<"\nOutputDataObject:\n";
+	cout<<"OutputDataObject:\n";
 	data->PrintSelf(cout,vtkIndent(0));
+
+	UGridWrapper<UGRID_DESC> wrapper( data );
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
 	if( ugrid == 0 ) return 1;
@@ -76,15 +82,51 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	vtkUnstructuredGrid* output = vtkUnstructuredGrid::New();
-	struct timeval T1, T2;
-	gettimeofday(&T1,NULL);
-	if( ! onikaEncodeMesh(ugrid,output,nedges,outfname) )
+	struct timeval T1; gettimeofday(&T1,NULL);
+
+	// wrap mesh arrays
+	auto cellValues = wrapper.cellValues(); // cell centered values
+	auto vertices = wrapper.vertices(); // vertex position and values
+	auto cells = wrapper.cells(); // cell-to-vertex connectivity
+
+	vtkIdType nverts = ugrid->GetNumberOfPoints();
+	vtkIdType nCells = ugrid->GetNumberOfCells();
+
+	// wraps direct (cell to vertex) and build reverse (vertex to cell) connectivity
+	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
+	auto v2c = make_v2c( c2v , nverts );
+	onika::debug::dbgassert( v2c.checkConsistency() );
+	cout<<nverts<<" vertices, "<<nCells <<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
+
+	// build edge length metric and shortest edge based cell ordering
+	// when vertices have a complex type i.e. tuple of values, each of which can be a tuple,
+	// edge_length_op takes the first element and compute the distance based on the first element only.
+	// this is why it is important to place vertex coordinates first in the vertex definition
+	auto edgeLength = edge_length_op(vertices);
+	auto c2e = make_smesh_c2e(c2v);
+	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
+	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
+
+	std::ofstream ofile(outfname.c_str());
+    onika::codec::AsciiStream out(ofile);
+	cout<<"\n-------------- start compressing ----------------\n";
+	for(int c=0;c<nedges;c++)
 	{
-		cout<<"Compression failed\n";
-		return 1;
+		auto minCell = * orderedCells.begin();
+		int minCellEdges = c2e.getCellNumberOfEdges(minCell);
+		auto edge = c2e.getCellEdge(minCell,0);
+		for(int i=1;i<minCellEdges;i++)
+		{
+			auto edge2 = c2e.getCellEdge(minCell,i);
+			if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
+		}
+		cout<<"Cell #"<<minCell<<", edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
+
+		onika::compress::smeshEdgeCollapseEncode(v2c, vertices, cellValues, edge, out);
 	}
-	gettimeofday(&T2,NULL);
+	onika::debug::dbgassert( v2c.checkConsistency() );
+
+	struct timeval T2; gettimeofday(&T2,NULL);
 	cout<<"execution time : "<<(T2.tv_sec-T1.tv_sec)*1000.0 + (T2.tv_usec-T1.tv_usec)*0.001<<" ms\n";
 
 	return 0;
