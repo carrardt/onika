@@ -44,14 +44,13 @@ using onika::tuple::types;
 template<int... I>
 using integers = onika::tuple::indices<I...>;
 
-#define UGRID_DESC float,3,types<long,long,int>,integers<1,1,1>,types<long,long,double,double,double,double,double,double,double>,integers<1,1,1,3,1,1,1,1,1>
+// definition of unstructured grid to pass test on
+#include "testdata.h"
 
 int main(int argc, char* argv[])
 {
-	if( argc<2 ) return 1;
-
 	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
-	reader->SetFileName(argv[1]);
+	reader->SetFileName(UGRID_FILE);
 	reader->Update();
 //	cout<<"Reader:\n";
 //	reader->PrintSelf(cout,vtkIndent(0));

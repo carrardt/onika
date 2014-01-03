@@ -76,7 +76,6 @@ inline std::ostream& operator << ( std::ostream& out, onika::container::ElementA
 	return out;
 }
 
-
 using namespace onika::vtk;
 
 bool onikaEncodeMesh(vtkUnstructuredGrid* input, vtkUnstructuredGrid* output, int nedges, const std::string& outputFileName)
