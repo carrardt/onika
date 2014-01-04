@@ -5,11 +5,8 @@
 #include <algorithm>
 #include <fstream>
 
-#include "onika/vec.h"
 #include "onika/vtk/readvtkascii.h"
 #include "onika/mesh/meshalgorithm.h"
-
-typedef onika::Vec<3,double> vec3;
 
 int main()
 {

@@ -45,7 +45,6 @@ void vtk_ugrid_desc( vtkUnstructuredGrid* data, std::ostream& out )
 	vtk_dsa_desc(data->GetCellData(),out);
 	out<<',';
 	vtk_dsa_desc(data->GetPointData(),out);
-	out<<'\n';
 }
 
 int main(int argc, char* argv[])
@@ -59,8 +58,8 @@ int main(int argc, char* argv[])
 	if( data == 0 ) return 1;
 
 	std::ofstream out(argv[2]);
-	out << "#undef UGRID_DESC\n#define UGRID_DESC ";
+	out << "#define UGRID_DESC ";
 	vtk_ugrid_desc(data,out);
-	out << "\n#undef UGRID_FILE\n#define UGRID_FILE \""<<argv[1]<<"\"\n";
+	out << "\n#define UGRID_FILE \""<<argv[1]<<"\"\n";
 	return 0;
 }

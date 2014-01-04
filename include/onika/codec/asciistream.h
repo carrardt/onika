@@ -3,7 +3,6 @@
 
 #include "onika/codec/types.h"
 #include "onika/codec/debugstream.h"
-#include "onika/vec.h"
 #include "onika/tuple.h"
 #include <iostream>
 #include <map>
@@ -34,15 +33,6 @@ namespace onika { namespace codec {
 			return *this;
 		}
 	
-		template<unsigned int NDim, typename CType>
-		inline AsciiStream& operator << (const Vec<NDim,CType>& v)
-		{
-			(*this)<<"Vec(";
-			(*this) << list( v.x, v.x+NDim );
-			(*this)<<")";
-			return (*this);
-		}
-
 		template<typename T>
 		inline AsciiStream& operator << (const BoundedValue<T>& i)
 		{

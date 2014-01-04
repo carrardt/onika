@@ -24,19 +24,19 @@ int main()
 	out<<x;	
 	out.stream1.debug()<<"streampos = "<<out.stream1.streampos;
 
-	onika::Vec<3,onika::codec::BoundedValue<double> > v_of_bv = {
-		onika::codec::bounded_value(1.24,0.5,2.3),
-		onika::codec::bounded_value(1.3,-0.1,1.9),
-		onika::codec::bounded_value(0.0,-0.56,2.9) };
-	out<< v_of_bv;
-	out.stream1.debug()<<"streampos = "<<out.stream1.streampos;
-
-	onika::codec::BoundedValue<onika::Vec<3,double> > bv_of_v(
-		onika::vec(1.23,1.1,1.2),
-		onika::vec(0.2,0.4,0.6),
-		onika::vec(2.1,3.1,4.1) );
-	out<< bv_of_v;
-	out.stream1.debug()<<"streampos = "<<out.stream1.streampos;
+//	onika::Vec<3,onika::codec::BoundedValue<double> > v_of_bv = {
+//		onika::codec::bounded_value(1.24,0.5,2.3),
+//		onika::codec::bounded_value(1.3,-0.1,1.9),
+//		onika::codec::bounded_value(0.0,-0.56,2.9) };
+//	out<< v_of_bv;
+//	out.stream1.debug()<<"streampos = "<<out.stream1.streampos;
+//
+//	onika::codec::BoundedValue<onika::Vec<3,double> > bv_of_v(
+//		onika::vec(1.23,1.1,1.2),
+//		onika::vec(0.2,0.4,0.6),
+//		onika::vec(2.1,3.1,4.1) );
+//	out<< bv_of_v;
+//	out.stream1.debug()<<"streampos = "<<out.stream1.streampos;
 
 	int set1[10] = {10,9,8,7,6,5,4,3,2,1};
 	int set2[10], n=0, min=0, max=0;

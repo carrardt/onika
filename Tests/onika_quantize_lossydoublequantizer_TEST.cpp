@@ -1,7 +1,6 @@
 #include "onika/quantize/lossydoublequantizer.h"
 
 #include "onika/vtk/readvtkascii.h"
-#include "onika/vec.h"
 #include "onika/poweroftwo.h"
 
 #include <iostream>
@@ -11,13 +10,16 @@ using namespace std;
 
 struct FakeMesh
 {
-	typedef onika::Vec<3,double> VertexPos;
+	struct VertexPos
+	{
+		double x[3];
+	};
 	inline void addCell(int n, const int* v) { }
 	inline void addVertex(const VertexPos& p)
 	{
-		values.push_back(p[0]);
-		values.push_back(p[1]);
-		values.push_back(p[2]);
+		values.push_back(p.x[0]);
+		values.push_back(p.x[1]);
+		values.push_back(p.x[2]);
 	}
 	vector<double> values;
 };

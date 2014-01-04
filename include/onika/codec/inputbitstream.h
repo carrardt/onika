@@ -5,7 +5,6 @@
 #include "onika/codec/types.h"
 #include "onika/codec/debugstream.h"
 #include "onika/debug/dbgassert.h"
-#include "onika/vec.h"
 #include "onika/poweroftwo.h"
 #include "onika/bits.h"
 
@@ -129,16 +128,6 @@ namespace onika { namespace codec {
 			return *this;
 		}		
 
-		template<unsigned int NDim, typename CType>
-		inline InputBitStream& operator >> ( Vec<NDim,CType>& v )
-		{
-			for(unsigned int i=0;i<NDim;i++)
-			{
-				(*this) >> v[i];
-			}
-			return (*this);
-		}
-
 		template<typename T1, typename T2>
 		inline InputBitStream& operator >> ( std::pair<T1,T2>& v )
 		{
@@ -156,18 +145,6 @@ namespace onika { namespace codec {
 		inline InputBitStream& operator >> ( std::vector<T>& l )
 		{
 			return (*this) >> List< typename std::vector<T>::iterator >(l.begin(),l.end());
-		}
-
-		template<unsigned int D, typename T>
-		inline InputBitStream& operator >> ( BoundedValue<Vec<D,T> >& value)
-		{
-			for(int i=0;i<D;++i)
-			{
-				auto token = bounded_value(value.min[i],value.max[i]);
-				(*this) >> token;
-				value.x[i] = token.x;
-			}
-			return (*this);
 		}
 
 		template<typename T>
