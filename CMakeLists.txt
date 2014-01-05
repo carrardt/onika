@@ -7,5 +7,6 @@ include_directories("include")
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 add_subdirectory(Tests)
+#add_subdirectory(jitti)
 add_subdirectory(PVCompressionPlugin)
 

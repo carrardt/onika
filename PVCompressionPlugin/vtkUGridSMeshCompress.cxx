@@ -34,6 +34,16 @@ template<class T> inline std::ostream& operator << ( std::ostream& out, onika::c
 #include "testdata.h"
 #endif
 
+struct UGridDataPointers
+{
+	void* mesh;
+	void** cellArrayPtrs;
+	size_t* cellArraySizes;
+	void** pointArrayPtrs;
+	size_t* pointArraySizes;
+	size_t meshSize;
+};
+
 bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const std::string& outfname)
 {
 	if( data == 0 ) return false;
