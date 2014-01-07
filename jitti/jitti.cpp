@@ -87,9 +87,11 @@ int main(int argc, const char **argv, char * const *envp)
   // FIXME: This is a hack to try to force the driver to do something we can
   // recognize. We need to extend the driver library to support this use model
   // (basically, exactly one input, and the operation mode is hard wired).
-  SmallVector<const char *, 16> Args(argv, argv + argc);
-  Args.push_back("-fsyntax-only");
-  OwningPtr<Compilation> C(TheDriver.BuildCompilation(Args));
+  const char * MyArgs[] = {"-x","c++","-std=c++11","-nostdinc++","-nobuiltininc","-fsyntax-only",argv[1],0};
+  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
+  ArrayRef<const char*> args(MyArgs,MyArgc);
+
+  OwningPtr<Compilation> C(TheDriver.BuildCompilation(args));
   if (!C)
     return 0;
 

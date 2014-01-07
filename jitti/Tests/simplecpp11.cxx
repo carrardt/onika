@@ -1,4 +1,3 @@
-#include <iostream>
 #include <fstream>
 
 // this solves the mangling problem with c++ functions
