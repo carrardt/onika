@@ -36,128 +36,155 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
-using namespace clang;
-using namespace clang::driver;
 
-static int Execute(llvm::Module *Mod, char * const *envp) {
-  llvm::InitializeNativeTarget();
-
-  std::string Error;
-  OwningPtr<llvm::ExecutionEngine> EE(
-    llvm::ExecutionEngine::createJIT(Mod, &Error));
-  if (!EE) {
-    llvm::errs() << "unable to make execution engine: " << Error << "\n";
-    return 255;
-  }
-
-  llvm::Function *EntryFn = Mod->getFunction("justdoit");
-  if (!EntryFn) {
-    llvm::errs() << "'justdoit' function not found in module.\n";
-    return 255;
-  }
-
-  // FIXME: Support passing arguments.
-  const char* cmesg = "Message passed from host code";
-  char* message = strdup(cmesg);
-  std::vector<llvm::GenericValue> Args;
-  Args.push_back( llvm::GenericValue( (void*)message ) );
-
-  EE->runFunction( EntryFn, Args );
-  return 0;
-}
-
-void* getMainAddr()
+namespace jitti
 {
-	return reinterpret_cast<void*>( getMainAddr );
+	class Module
+	{
+	public:
+
+		inline Module( Module&& m )
+			: m_module(m.m_module)
+			, m_executionEngine(m.m_executionEngine)
+		{
+			m.m_module = 0;
+			m.m_executionEngine = 0;
+		}
+
+		inline Module( llvm::Module* mod ) : m_module(mod)
+		{
+			  llvm::InitializeNativeTarget();
+
+			  std::string Error;
+			  m_executionEngine = llvm::ExecutionEngine::createJIT(m_module, &Error);
+			  if (!m_executionEngine)
+			  {
+			    llvm::errs() << "unable to make execution engine: " << Error << "\n";
+			  }
+		}
+		inline llvm::GenericValue call(const char* function)
+		{
+			  llvm::Function *EntryFn = m_module->getFunction(function);
+			  if (!EntryFn) {
+			    llvm::errs() <<"function '"<<function<< "'  not found in module.\n";
+			    return llvm::GenericValue(0);
+			  }
+
+			  const char* cmesg = "Message passed from host code";
+			  char* message = strdup(cmesg);
+			  std::vector<llvm::GenericValue> Args;
+			  Args.push_back( llvm::GenericValue( (void*)message ) );
+
+			  return m_executionEngine->runFunction( EntryFn, Args );
+		}
+	private:
+		llvm::Module* m_module;
+		llvm::ExecutionEngine* m_executionEngine;
+	};
+
+	class Compiler
+	{
+	public:
+		inline Compiler()
+		{
+			  // error printing mechanism
+			  DiagOpts = new clang::DiagnosticOptions();
+			  DiagClient = new clang::TextDiagnosticPrinter(llvm::errs(), DiagOpts);
+			  DiagID = new clang::DiagnosticIDs();
+			  Diags = new clang::DiagnosticsEngine(DiagID, DiagOpts, DiagClient);
+			  driver = new clang::driver::Driver("jitti", llvm::sys::getProcessTriple(), "a.out", *Diags);
+			  driver->setTitle("jitti");
+
+			  compilation = 0;
+			  codeGenAction = new clang::EmitLLVMOnlyAction();
+		}
+
+		inline Module compileFile(const char* filePath)
+		{
+			  const char * MyArgs[] = {"-v","-xc++","-std=c++11","-c",filePath,0};
+			  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
+			  clang::ArrayRef<const char*> args(MyArgs,MyArgc);
+			  compilation = driver->BuildCompilation(args);
+			  if( compilation == 0 )
+			  {
+				  llvm::errs() << "Unable to build compilation";
+				  return 0;
+			  }
+
+			  // We expect to get back exactly one command job, if we didn't something
+			  // failed. Extract that job from the compilation.
+			  const clang::driver::JobList &Jobs = compilation->getJobs();
+			  if (Jobs.size() != 1 || !clang::isa<clang::driver::Command>(*Jobs.begin()))
+			  {
+				  Diags->Report(clang::diag::err_fe_expected_compiler_job);
+			    return 0;
+			  }
+
+			  const clang::driver::Command *Cmd = clang::cast<clang::driver::Command>(*Jobs.begin());
+			  if (llvm::StringRef(Cmd->getCreator().getName()) != "clang")
+			  {
+				  Diags->Report(clang::diag::err_fe_expected_clang_command);
+			    return 0;
+			  }
+
+			  // Initialize a compiler invocation object from the clang (-cc1) arguments.
+			  const clang::driver::ArgStringList &CCArgs = Cmd->getArguments();
+			  clang::CompilerInvocation* CI = new clang::CompilerInvocation;
+			  clang::CompilerInvocation::CreateFromArgs(*CI,
+			                                     const_cast<const char **>(CCArgs.data()),
+			                                     const_cast<const char **>(CCArgs.data()) +
+			                                       CCArgs.size(),
+			                                     * Diags );
+
+//			  const std::vector< FrontendInputFile >& inputs = CI->getFrontendOpts().Inputs;
+//			  for(int i=0;i<inputs.size();i++)
+//			  {
+//				  llvm::errs()<< inputs[i].getFile () << "\n";
+//			  }
+
+			  // Create a compiler instance to handle the actual work.
+			  clang::CompilerInstance Clang;
+			  Clang.setInvocation(CI);
+			  CI=0;
+
+			  // Create the compilers actual diagnostics engine.
+			  Clang.createDiagnostics();
+			  if (!Clang.hasDiagnostics())
+			  {
+				  llvm::errs()<< "no diagnostics\n";
+			    return 0;
+			  }
+
+			  // Create and execute the frontend to generate an LLVM bitcode module.
+			  if (!Clang.ExecuteAction(*codeGenAction))
+			  {
+				  llvm::errs()<< "compilation failed\n";
+				  return 0;
+			  }
+
+			  return Module( codeGenAction->takeModule() );
+		}
+
+	private:
+		clang::driver::Driver* driver;
+		clang::DiagnosticOptions* DiagOpts;
+		clang::TextDiagnosticPrinter *DiagClient;
+		clang::DiagnosticIDs* DiagID;
+		clang::DiagnosticsEngine* Diags;
+		clang::driver::Compilation* compilation;
+		clang::CodeGenAction* codeGenAction;
+	};
 }
 
-int main(int argc, const char **argv, char * const *envp)
+int main(int argc, const char **argv)
 {
   std::string Path = argv[0];
 
-  // error printing mechanism
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  TextDiagnosticPrinter *DiagClient = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
-  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+  jitti::Compiler mycompiler;
 
-  Driver TheDriver(Path, llvm::sys::getProcessTriple(), "a.out", Diags);
-  TheDriver.setTitle("jitti");
-
-  // FIXME: This is a hack to try to force the driver to do something we can
-  // recognize. We need to extend the driver library to support this use model
-  // (basically, exactly one input, and the operation mode is hard wired).
-  const char * MyArgs[] = {"-x","c++","-std=c++11","-nostdinc++","-nobuiltininc","-fsyntax-only",argv[1],0};
-  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
-  ArrayRef<const char*> args(MyArgs,MyArgc);
-
-  OwningPtr<Compilation> C(TheDriver.BuildCompilation(args));
-  if (!C)
-    return 0;
-
-  // FIXME: This is copied from ASTUnit.cpp; simplify and eliminate.
-
-  // We expect to get back exactly one command job, if we didn't something
-  // failed. Extract that job from the compilation.
-  const clang::driver::JobList &Jobs = C->getJobs();
-  if (Jobs.size() != 1 || !isa<driver::Command>(*Jobs.begin())) {
-//    SmallString<256> Msg;
-//    llvm::raw_svector_ostream OS(Msg);
-//    Jobs.Print(OS, "; ", true);
-//    Diags.Report(diag::err_fe_expected_compiler_job) << OS.str();
-    return 1;
-  }
-
-  const driver::Command *Cmd = cast<driver::Command>(*Jobs.begin());
-  if (llvm::StringRef(Cmd->getCreator().getName()) != "clang") {
-    Diags.Report(diag::err_fe_expected_clang_command);
-    return 1;
-  }
-
-  // Initialize a compiler invocation object from the clang (-cc1) arguments.
-  const driver::ArgStringList &CCArgs = Cmd->getArguments();
-  OwningPtr<CompilerInvocation> CI(new CompilerInvocation);
-  CompilerInvocation::CreateFromArgs(*CI,
-                                     const_cast<const char **>(CCArgs.data()),
-                                     const_cast<const char **>(CCArgs.data()) +
-                                       CCArgs.size(),
-                                     Diags);
-
-  // Show the invocation, with -v.
-  if (CI->getHeaderSearchOpts().Verbose) {
-    llvm::errs() << "clang invocation:\n";
-//    Jobs.Print(llvm::errs(), "\n", true);
-    llvm::errs() << "\n";
-  }
-
-  // FIXME: This is copied from cc1_main.cpp; simplify and eliminate.
-
-  // Create a compiler instance to handle the actual work.
-  CompilerInstance Clang;
-  Clang.setInvocation(CI.take());
-
-  // Create the compilers actual diagnostics engine.
-  Clang.createDiagnostics();
-  if (!Clang.hasDiagnostics())
-    return 1;
-
-  // Infer the builtin include path if unspecified.
-  if (Clang.getHeaderSearchOpts().UseBuiltinIncludes &&
-      Clang.getHeaderSearchOpts().ResourceDir.empty())
-    Clang.getHeaderSearchOpts().ResourceDir =
-      CompilerInvocation::GetResourcesPath(argv[0], getMainAddr() );
-
-  // Create and execute the frontend to generate an LLVM bitcode module.
-  OwningPtr<CodeGenAction> Act(new EmitLLVMOnlyAction());
-  if (!Clang.ExecuteAction(*Act))
-    return 1;
-
-  int Res = 255;
-  if (llvm::Module *Module = Act->takeModule())
-    Res = Execute(Module, envp);
+  jitti::Module jitmodule = mycompiler.compileFile(argv[1]);
+  jitmodule.call("justdoit");
 
   // Shutdown.
-
   llvm::llvm_shutdown();
-  return Res;
 }

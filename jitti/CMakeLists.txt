@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_clang_executable(jitti jitti.cpp)
 
 target_link_libraries(jitti
