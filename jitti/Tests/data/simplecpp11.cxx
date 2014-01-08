@@ -15,8 +15,10 @@ int myfunction( std::ostream& cout, const T&... args )
 	return sizeof...(T);
 }
 
+//#define MYDEFINE "<not redefined>"
+
 int justdoit(const char* message,int x)
 {
 	std::ofstream cout("/dev/stdout");
-	return myfunction(cout,message,' ',"World",' ',x,std::string("\n"));
+	return myfunction(cout,message,' ',"World",' ',x,' ',MYDEFINE,std::string("\n"));
 }

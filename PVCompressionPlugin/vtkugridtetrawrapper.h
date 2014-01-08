@@ -21,6 +21,7 @@
 
 namespace onika { namespace vtk {
 
+	// partir du tableau directement
 	template<int Dim>
 	inline bool allCellsAreSimplicies(vtkUnstructuredGrid* ugrid)
 	{

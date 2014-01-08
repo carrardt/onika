@@ -1,5 +1,4 @@
-#include <map>
-#include <string>
+#include <cstdint>
 
 namespace llvm
 {
@@ -85,7 +84,7 @@ namespace jitti
 	class Compiler
 	{
 	public:
-		static Module createModuleFromFile(const char* filePath);
+		static Module createModuleFromFile(const char* filePath,const char* opt_args="");
 	};
 }
 

@@ -38,6 +38,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "jitti.h"
 
+#include <cctype>
+
 namespace jitti
 {
 	struct FunctionPriv
@@ -161,17 +163,32 @@ namespace jitti
 		}
 
 	public:
-		inline Module compileFile(const char* filePath)
+		inline Module compileFile(const char* filePath, const char* args_in)
 		{
-			  const char * MyArgs[] = {"-xc++","-std=c++11","-c",filePath,0};
+			  const char * MyArgs[256] = {"-xc++","-std=c++11","-c",0};
 			  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
-			  clang::ArrayRef<const char*> args(MyArgs,MyArgc);
-			  compilation = driver->BuildCompilation(args);
+
+			  char* args = strdup(args_in);
+			  while( *args != '\0' && MyArgc<255 )
+			  {
+				  while( *args != '\0' && std::isspace(*args) ) { *args='\0'; ++args; }
+				  if( *args != '\0' ) MyArgs[MyArgc++] = args;
+				  while( *args != '\0' && ! std::isspace(*args) ) { ++args; }
+			  }
+			  MyArgs[MyArgc++] = filePath;
+			  MyArgs[MyArgc] = 0;
+
+			  for(int i=0;i<MyArgc;i++) llvm::errs() << MyArgs[i] << "\n";
+
+			  clang::ArrayRef<const char*> argsRef(MyArgs,MyArgc);
+			  compilation = driver->BuildCompilation(argsRef);
 			  if( compilation == 0 )
 			  {
 				  llvm::errs() << "Unable to build compilation";
 				  return 0;
 			  }
+//			  free(args);
+
 
 			  // We expect to get back exactly one command job, if we didn't something
 			  // failed. Extract that job from the compilation.
@@ -238,9 +255,9 @@ namespace jitti
 
 	CompilerImp* CompilerImp::c_instance = 0;
 	
-	Module Compiler::createModuleFromFile(const char* filePath)
+	Module Compiler::createModuleFromFile(const char* filePath,const char* opt_args)
 	{
-		return CompilerImp::instance()->compileFile(filePath);
+		return CompilerImp::instance()->compileFile(filePath,opt_args);
 	}
 }
 
