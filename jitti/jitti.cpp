@@ -36,57 +36,113 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
+#include "jitti.h"
 
 namespace jitti
 {
-	class Module
+	struct FunctionPriv
 	{
-	public:
+		llvm::ExecutionEngine* m_executionEngine;
+		llvm::Function * m_entryPoint;
+		std::vector<llvm::GenericValue> m_args;
+		llvm::GenericValue m_ret;
+	};
 
-		inline Module( Module&& m )
-			: m_module(m.m_module)
-			, m_executionEngine(m.m_executionEngine)
+	void Function::resetCallArgs() { priv->m_args.clear(); }
+	void Function::pushArgPtr(void * ptr) { llvm::GenericValue val; val.PointerVal=ptr; priv->m_args.push_back(val); } 
+	void Function::pushArgInt(const int & x)  { llvm::GenericValue val; val.IntVal=llvm::APInt(sizeof(x)*8,x,true); priv->m_args.push_back(val); } 
+	void Function::pushArgUInt(const unsigned int & x) { llvm::GenericValue val; val.IntVal=llvm::APInt(sizeof(x)*8,x,true); priv->m_args.push_back(val); }
+	void Function::pushArgLong(const long long int & x) { llvm::GenericValue val; val.IntVal=llvm::APInt(sizeof(x)*8,x,true); priv->m_args.push_back(val); }
+	void Function::pushArgULong(const unsigned long long int & x) { llvm::GenericValue val; val.IntVal=llvm::APInt(sizeof(x)*8,x,true); priv->m_args.push_back(val); }
+	void Function::pushArgFloat(const float & x) { llvm::GenericValue val; val.FloatVal=x; priv->m_args.push_back(val);  }
+	void Function::pushArgDouble(const double & x) { llvm::GenericValue val; val.DoubleVal=x; priv->m_args.push_back(val);  }
+
+	void Function::call()
+	{
+		if( priv->m_executionEngine == 0 || priv->m_entryPoint == 0 )
 		{
-			m.m_module = 0;
-			m.m_executionEngine = 0;
+			llvm::errs() << "Execution error\n";
+			return;
 		}
+		priv->m_ret = priv->m_executionEngine->runFunction( priv->m_entryPoint, priv->m_args );
+	}
 
-		inline Module( llvm::Module* mod ) : m_module(mod)
-		{
-			  llvm::InitializeNativeTarget();
+	void* Function::getReturnValueAsPtr() { return priv->m_ret.PointerVal; }
+	uint64_t Function::getReturnValueAsULong() { return priv->m_ret.IntVal.getLimitedValue(); }
+	float Function::getReturnValueAsFloat() { return priv->m_ret.FloatVal; }
+	double Function::getReturnValueAsDouble() { return priv->m_ret.DoubleVal; }
 
-			  std::string Error;
-			  m_executionEngine = llvm::ExecutionEngine::createJIT(m_module, &Error);
-			  if (!m_executionEngine)
-			  {
-			    llvm::errs() << "unable to make execution engine: " << Error << "\n";
-			  }
-		}
-		inline llvm::GenericValue call(const char* function)
-		{
-			  llvm::Function *EntryFn = m_module->getFunction(function);
-			  if (!EntryFn) {
-			    llvm::errs() <<"function '"<<function<< "'  not found in module.\n";
-			    return llvm::GenericValue(0);
-			  }
 
-			  const char* cmesg = "Message passed from host code";
-			  char* message = strdup(cmesg);
-			  std::vector<llvm::GenericValue> Args;
-			  Args.push_back( llvm::GenericValue( (void*)message ) );
-
-			  return m_executionEngine->runFunction( EntryFn, Args );
-		}
-	private:
+	struct ModulePriv
+	{
 		llvm::Module* m_module;
+		std::map<std::string,FunctionPriv> m_entryPoints;
 		llvm::ExecutionEngine* m_executionEngine;
 	};
 
-	class Compiler
+	Module::Module( const Module& m )
+	{
+		priv = new ModulePriv;
+		*priv = *(m.priv);
+	}
+	Module::Module( Module&& m )
+	{
+		priv = m.priv;
+		m.priv = 0;
+	}
+	Module::Module( llvm::Module* mod )
+	{
+		priv = new ModulePriv;
+		priv->m_module = mod;
+		std::string Error;
+		priv->m_executionEngine = llvm::ExecutionEngine::createJIT(priv->m_module, &Error);
+		if ( ! priv->m_executionEngine )
+		{
+		  llvm::errs() << "unable to make execution engine: " << Error << "\n";
+		}
+	}
+	Module::~Module()
+	{
+		if( priv != 0 ) delete priv;
+	}
+
+	Function Module::getFunction(const char* name)
+	{
+		auto it = priv->m_entryPoints.find(name);
+		if( it != priv->m_entryPoints.end() )
+		{
+			return Function( & it->second );
+		}
+		llvm::Function* F = priv->m_module->getFunction(name);
+		if ( F == 0 )
+		{
+		   	llvm::errs() <<"function '"<<name<< "'  not found in module.\n";
+		}
+		FunctionPriv fdata = { priv->m_executionEngine , F };
+		priv->m_entryPoints[name] = fdata; 
+		return Function( & priv->m_entryPoints[name] );
+	}
+
+	class CompilerImp
 	{
 	public:
-		inline Compiler()
+		static inline CompilerImp* instance()
 		{
+			if( c_instance == 0 )
+			{
+				new CompilerImp();
+			}
+			return c_instance;
+		}
+	private:
+		static CompilerImp* c_instance;
+		inline CompilerImp()
+		{
+			assert(c_instance==0);
+			c_instance = this;
+
+			  llvm::InitializeNativeTarget();
+
 			  // error printing mechanism
 			  DiagOpts = new clang::DiagnosticOptions();
 			  DiagClient = new clang::TextDiagnosticPrinter(llvm::errs(), DiagOpts);
@@ -99,9 +155,15 @@ namespace jitti
 			  codeGenAction = new clang::EmitLLVMOnlyAction();
 		}
 
+		inline ~CompilerImp()
+		{
+		  llvm::llvm_shutdown();
+		}
+
+	public:
 		inline Module compileFile(const char* filePath)
 		{
-			  const char * MyArgs[] = {"-v","-xc++","-std=c++11","-c",filePath,0};
+			  const char * MyArgs[] = {"-xc++","-std=c++11","-c",filePath,0};
 			  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
 			  clang::ArrayRef<const char*> args(MyArgs,MyArgc);
 			  compilation = driver->BuildCompilation(args);
@@ -164,7 +226,6 @@ namespace jitti
 
 			  return Module( codeGenAction->takeModule() );
 		}
-
 	private:
 		clang::driver::Driver* driver;
 		clang::DiagnosticOptions* DiagOpts;
@@ -174,17 +235,12 @@ namespace jitti
 		clang::driver::Compilation* compilation;
 		clang::CodeGenAction* codeGenAction;
 	};
+
+	CompilerImp* CompilerImp::c_instance = 0;
+	
+	Module Compiler::createModuleFromFile(const char* filePath)
+	{
+		return CompilerImp::instance()->compileFile(filePath);
+	}
 }
 
-int main(int argc, const char **argv)
-{
-  std::string Path = argv[0];
-
-  jitti::Compiler mycompiler;
-
-  jitti::Module jitmodule = mycompiler.compileFile(argv[1]);
-  jitmodule.call("justdoit");
-
-  // Shutdown.
-  llvm::llvm_shutdown();
-}

@@ -112,8 +112,8 @@ namespace onika { namespace vtk {
 		inline auto cellValues_aux( tuple::types<T...> , tuple::indices<S...> , tuple::indices<I...> )
 		ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,true,I>().wrap(ugrid))... ) )
 	public:
-		inline auto cellValues() ONIKA_AUTO_RET( cellValues_aux(CT(),CS(),tuple::make_indices<NCA>()) )
-		inline auto vertices() ONIKA_AUTO_RET( vertices_aux(PT(),PS(),tuple::make_indices<NPA>()) )
+		inline auto cellValues() ONIKA_AUTO_RET( this->cellValues_aux(CT(),CS(),tuple::make_indices<NCA>()) )
+		inline auto vertices() ONIKA_AUTO_RET( this->vertices_aux(PT(),PS(),tuple::make_indices<NPA>()) )
 		inline auto cells() ONIKA_AUTO_RET( UGridCells().wrap(ugrid) )
 	};
 
