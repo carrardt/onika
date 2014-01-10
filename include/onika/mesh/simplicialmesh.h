@@ -13,7 +13,7 @@ simple traits for simplicial cells of equal dimensions, with vertex ids packed s
 exemple: for 3D case, cells are tetrahedras (4 vertices per cell). array will contain :
 Cell1:Vertex1, Cell1:Vertex2, Cell1:Vertex3, Cell1:Vertex4, Cell2:Vertex1 ...
 */ 
-template<class _ContainerType, unsigned int _NDim,int _CellGap=0>
+template<class _ContainerType, unsigned int _NDim,int _PreCellGap=0, int _PostCellGap=0>
 struct smesh_c2v_basic_traits
 {
 	typedef _ContainerType ContainerType;
@@ -27,25 +27,25 @@ struct smesh_c2v_basic_traits
 
 	// empty vertex slots between two cells.
 	// i.e. usefull for storage where you have NCellVerts,V1,V2...,Vn, NCellVerts, ...
-	static constexpr IdType CellGap = _CellGap;
+	static constexpr IdType PreCellGap = _PreCellGap; // unused values before vertex indices
+	static constexpr IdType PostCellGap = _PostCellGap; // unused values after vertex indices
 
 	// space between two cells
-	static constexpr IdType CellStride = NVerts+CellGap;
+	static constexpr IdType CellStride = NVerts + PreCellGap + PostCellGap;
 
 	// =================================================================================
 	// ============================ read only access ===================================
 	// =================================================================================
 	static constexpr IdType getMaxCellVertices(const ContainerType& c) { return NVerts; }
 	static inline IdType getNumberOfCells(const ContainerType& c) { return c.size()/CellStride; }
-    static inline IdType getTotalNumberOfCellVertices(const ContainerType& c) { return getNumberOfCells(c)*NVerts; }
+    	static inline IdType getTotalNumberOfCellVertices(const ContainerType& c) { return getNumberOfCells(c)*NVerts; }
 	static inline IdType getCellNumberOfVertices(const ContainerType& c, IdType i) { return NVerts; }
-	static inline IdType getCellVertexId(const ContainerType& c, IdType cell, IdType i) { return c[cell*CellStride+i]; }
-
+	static inline IdType getCellVertexId(const ContainerType& c, IdType cell, IdType i) { return c[cell*CellStride+PreCellGap+i]; }
 
 	// =================================================================================
 	// ============================ write access =======================================
 	// =================================================================================
-	static inline void setCellVertexId(ContainerType& c, IdType cell, IdType i, IdType j) { c[ (cell*CellStride) + i ] = j; }
+	static inline void setCellVertexId(ContainerType& c, IdType cell, IdType i, IdType j) { c[ (cell*CellStride) + PreCellGap + i ] = j; }
 	static inline void setCellNumberOfVertices(ContainerType& c, IdType cell, IdType n)  // you _cannot_ modify number of vertices
 	{
 		debug::dbgassert( cell>=0 && cell<getNumberOfCells(c) );
@@ -55,13 +55,13 @@ struct smesh_c2v_basic_traits
 	static inline void eraseVertex(ContainerType& c, IdType cell, IdType vert)  {}
 	static inline void swapVertices(ContainerType& c, IdType cA, IdType vA, IdType cB, IdType vB)
 	{
-		std::swap( c[ (cA*CellStride) + vA ] , c[ (cB*CellStride) + vB ] );
+		std::swap( c[ (cA*CellStride) + PreCellGap + vA ] , c[ (cB*CellStride) + PreCellGap + vB ] );
 	}
 	static inline void moveVertexTo(ContainerType& c, IdType cA, IdType vA, IdType cB, IdType vB)
 	{
 		if( (cA != cB) || (vA != vB) )
 		{
-			c[ (cB*CellStride) + vB ] = c[ (cA*CellStride) + vA ] ;
+			c[ (cB*CellStride) + PreCellGap + vB ] = c[ (cA*CellStride) + PreCellGap + vA ] ;
 			eraseVertex(c, cA, vA );
 		}
 	}
@@ -102,7 +102,6 @@ struct smesh_c2e_basic_traits
 		v2 = c2v_traits::getCellVertexId(c,cell,v2);
 		return std::make_tuple(v1,v2);
 	}
-
 };
 
 template<class c2v_wrapper>
@@ -112,8 +111,5 @@ ONIKA_AUTO_RET( C2EWrapper<smesh_c2e_basic_traits<typename c2v_wrapper::traits> 
 } } // namspace onika
 
 
-// ==========================================================
-// =================== Unit Test ============================
-// ==========================================================
-
 #endif // end of file
+

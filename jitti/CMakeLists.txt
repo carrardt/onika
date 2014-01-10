@@ -112,7 +112,12 @@ target_link_libraries(jitti
 	LLVMRuntimeDyld
 	LLVMObject
 	LLVMSupport
-	rt dl tinfo pthread z)
+	rt
+	dl
+#	tinfo
+	pthread
+	z
+)
 
 add_subdirectory(Tests)
 

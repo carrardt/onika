@@ -1,5 +1,3 @@
-#include "vtkugridtetrawrapper.h"
-#include "vtkarraywrapper.h"
 #include "onika/mesh/cell2vertex.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
@@ -13,6 +11,9 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkFloatArray.h>
 #include <vtkDataArrayTemplate.h>
+
+#include "vtkugridtetrawrapper.h"
+#include "vtkUGridDescription.h"
 
 using std::cout;
 using namespace onika::vtk;
@@ -34,23 +35,39 @@ template<class T> inline std::ostream& operator << ( std::ostream& out, onika::c
 #include "testdata.h"
 #endif
 
-struct UGridDataPointers
+// partir du tableau directement
+template<int Dim>
+static inline bool allCellsAreSimplicies(vtkUnstructuredGrid* ugrid)
 {
-	void* mesh;
-	void** cellArrayPtrs;
-	size_t* cellArraySizes;
-	void** pointArrayPtrs;
-	size_t* pointArraySizes;
-	size_t meshSize;
-};
+	vtkIdType n = ugrid->GetNumberOfCells();
+	vtkIdType* cells = ugrid->GetCells()->GetData()->GetPointer(0);
+	for(vtkIdType i=0;i<n;i++)
+	{
+		vtkIdType nverts = *(cells++);
+		if( nverts != (Dim+1) ) return false;
+		cells += nverts;
+	}
+	return true;
+}
 
-bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const std::string& outfname)
+static inline bool allCellsAreTetras(vtkUnstructuredGrid* ugrid)
+{
+	return allCellsAreSimplicies<3>(ugrid);
+}
+
+bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname)
 {
 	if( data == 0 ) return false;
 //	cout<<"OutputDataObject:\n";
 //	data->PrintSelf(cout,vtkIndent(0));
 
-	UGridWrapper<UGRID_DESC> wrapper( data );
+	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast( data );
+	if( ugrid == 0 ) return false;
+	if( ! allCellsAreTetras(ugrid) ) return false;
+
+	vtkUGridDescription ugrid_desc;
+	init_ugrid_description( ugrid_desc , ugrid );
+	UGridWrapper<UGRID_DESC> wrapper( ugrid_desc );
 
 	// wrap mesh arrays
 	auto cellValues = wrapper.cellValues(); // cell centered values
@@ -76,7 +93,7 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const std::string& o
 	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
 
-	std::ofstream ofile(outfname.c_str());
+	std::ofstream ofile(outfname);
     onika::codec::AsciiStream out(ofile);
 	cout<<"\n-------------- start compressing ----------------\n";
 	for(int c=0;c<nedges;c++)

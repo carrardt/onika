@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 
 	struct timeval T1; gettimeofday(&T1,NULL);
 
-	vtkUGridSMeshCompress( data , nedges, outfname );
+	vtkUGridSMeshCompress( data , nedges, outfname.c_str() );
 
 	struct timeval T2; gettimeofday(&T2,NULL);
 	cout<<"execution time : "<<(T2.tv_sec-T1.tv_sec)*1000.0 + (T2.tv_usec-T1.tv_usec)*0.001<<" ms\n";

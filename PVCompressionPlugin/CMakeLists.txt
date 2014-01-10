@@ -11,14 +11,15 @@ else(${BUILD_PARAVIEW_PLUGIN})
 	INCLUDE(${VTK_USE_FILE})
 endif(${BUILD_PARAVIEW_PLUGIN})
 
-add_executable(genugriddesc genugriddesc.cxx)
+add_executable(genugriddesc genugriddesc.cxx vtkUGridDescription.cxx)
 target_link_libraries(genugriddesc ${VTK_LIBRARIES})
 
 add_custom_target(generate_test_data_desc
-				  genugriddesc "${TEST_UGRID_FILE}" "testdata.h" " \#define UGRID_DESC "
-				  DEPENDS genugriddesc)
+	genugriddesc "${TEST_UGRID_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/testdata.h" " \#define UGRID_DESC "
+	DEPENDS genugriddesc)
 
-add_library(vtkUGridSMeshCompress SHARED vtkUGridSMeshCompress.cxx)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+add_library(vtkUGridSMeshCompress SHARED vtkUGridSMeshCompress.cxx vtkUGridDescription.cxx)
 add_dependencies(vtkUGridSMeshCompress generate_test_data_desc)
 
 add_subdirectory(Tests)

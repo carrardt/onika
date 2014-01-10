@@ -1,51 +1,6 @@
-/*
- * genugriddesc.cxx
- *
- *  Created on: 2 janv. 2014
- *      Author: thierry
- */
+#include "vtkUGridDescription.h"
 #include <vtkXMLUnstructuredGridReader.h>
-#include <vtkUnstructuredGrid.h>
-#include <vtkDataArray.h>
-#include <vtkCellData.h>
-#include <vtkPointData.h>
-
-#include <iostream>
 #include <fstream>
-
-void vtk_array_desc(vtkDataArray* array, std::ostream& out )
-{
-	out << array->GetDataTypeAsString();
-	out << ',';
-	out << array->GetNumberOfComponents();
-}
-
-void vtk_dsa_desc(vtkDataSetAttributes* dsa, std::ostream& out )
-{
-	out << "types<";
-	int n = dsa->GetNumberOfArrays();
-	for(int i=0;i<n;i++)
-	{
-		out << dsa->GetArray(i)->GetDataTypeAsString();
-		if(i<(n-1)) out << ',';
-	}
-	out << ">,integers<";
-	for(int i=0;i<n;i++)
-	{
-		out << dsa->GetArray(i)->GetNumberOfComponents();
-		if(i<(n-1)) out << ',';
-	}
-	out << '>';
-}
-
-void vtk_ugrid_desc( vtkUnstructuredGrid* data, std::ostream& out )
-{
-	vtk_array_desc(data->GetPoints()->GetData(),out);
-	out<<',';
-	vtk_dsa_desc(data->GetCellData(),out);
-	out<<',';
-	vtk_dsa_desc(data->GetPointData(),out);
-}
 
 int main(int argc, char* argv[])
 {
@@ -59,7 +14,8 @@ int main(int argc, char* argv[])
 
 	std::ofstream out(argv[2]);
 	out << "#define UGRID_DESC ";
-	vtk_ugrid_desc(data,out);
+	onika::vtk::printUGridSignature(data,out);
 	out << "\n#define UGRID_FILE \""<<argv[1]<<"\"\n";
 	return 0;
 }
+
