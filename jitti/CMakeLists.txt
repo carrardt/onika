@@ -1,6 +1,7 @@
 set(LLVM_INC_DIR "/usr/local/include" CACHE STRING "LLVM include directory")
 set(CLANG_INC_DIR "/usr/local/include/clang" CACHE STRING "LLVM include directory")
 set(LLVM_LIB_DIR "/usr/local/lib" CACHE STRING "LLVM lib directory")
+set(CLANG_COMPILER "/usr/local/bin/clang" CACHE STRING "clang compiler")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS")
 
@@ -114,7 +115,7 @@ target_link_libraries(jitti
 	LLVMSupport
 	rt
 	dl
-#	tinfo
+	tinfo
 	pthread
 	z
 )

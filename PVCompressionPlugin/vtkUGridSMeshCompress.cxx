@@ -1,65 +1,74 @@
-#include "onika/mesh/cell2vertex.h"
-#include "onika/mesh/cell2edge.h"
-#include "onika/mesh/simplicialmesh.h"
-#include "onika/mesh/meshalgorithm.h"
-#include "onika/container/sequence.h"
-#include "onika/debug/dbgassert.h"
-#include "onika/language.h"
-#include "onika/codec/asciistream.h"
-#include "onika/compress/edgecompress.h"
-
 #include <vtkUnstructuredGrid.h>
-#include <vtkFloatArray.h>
-#include <vtkDataArrayTemplate.h>
+#include <vtkCellArray.h>
 
-#include "vtkugridtetrawrapper.h"
+#include "jitti.h"
 #include "vtkUGridDescription.h"
 
-using std::cout;
+#include <map>
+#include <string>
+#include <sstream>
+
 using namespace onika::vtk;
-using onika::mesh::edge_length_op;
-using onika::mesh::cell_shortest_edge_less;
-using onika::mesh::make_smesh_c2e;
-using onika::mesh::ordered_cell_set;
-using onika::tuple::types;
 
-template<int... I>
-using integers = onika::tuple::indices<I...>;
-
-// convinient operators for std::stream
-template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
-template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t ) { out << t.get(); return out; }
-template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t ) { out << t.get(); return out; }
-
-#ifndef UGRID_DESC
-#include "testdata.h"
+#ifndef UGRID_SMESH_COMPRESS_JIT
+#error No path to JIT source file
 #endif
 
-// partir du tableau directement
-template<int Dim>
-static inline bool allCellsAreSimplicies(vtkUnstructuredGrid* ugrid)
+struct UGRidSMeshCompressionModule
 {
-	vtkIdType n = ugrid->GetNumberOfCells();
-	vtkIdType* cells = ugrid->GetCells()->GetData()->GetPointer(0);
-	for(vtkIdType i=0;i<n;i++)
-	{
-		vtkIdType nverts = *(cells++);
-		if( nverts != (Dim+1) ) return false;
-		cells += nverts;
-	}
-	return true;
-}
+	jitti::Module module;
+	jitti::Function function;
 
-static inline bool allCellsAreTetras(vtkUnstructuredGrid* ugrid)
-{
-	return allCellsAreSimplicies<3>(ugrid);
-}
+	inline UGRidSMeshCompressionModule()
+		{ }
+
+	inline UGRidSMeshCompressionModule( UGRidSMeshCompressionModule&& cm )
+		: module( std::move(cm.module) )
+		, function( std::move(cm.function) )
+		{ }
+	
+	inline UGRidSMeshCompressionModule( jitti::Module&& m, jitti::Function&& f )
+		: module(m)
+		, function(f)
+		{ }
+
+	inline  UGRidSMeshCompressionModule& operator = ( UGRidSMeshCompressionModule&& cm )
+	{
+		module = std::move( cm.module ) ;
+		function = std::move( cm.function ) ;
+	}
+	
+	static jitti::Function& getFunction( const std::string& sig )
+	{
+		auto it = m_modules.find( sig );
+		if( it != m_modules.end() )
+		{
+			return it->second.function;
+		}
+
+		std::string opt = "-DUGRID_DESC=" + sig ;
+		auto m = jitti::Compiler::createModuleFromFile(UGRID_SMESH_COMPRESS_JIT,opt.c_str());
+		auto f = m.getFunction("ugridsmeshcompress");
+		m_modules[sig] = UGRidSMeshCompressionModule( std::move(m) ,std::move(f) ) ;
+		return m_modules[sig].function; 
+	}
+
+	static std::map< std::string , UGRidSMeshCompressionModule > m_modules;
+
+private:
+	UGRidSMeshCompressionModule& operator = ( const UGRidSMeshCompressionModule& cm );
+	//UGRidSMeshCompressionModule( const UGRidSMeshCompressionModule& cm );
+};
+
+std::map< std::string , UGRidSMeshCompressionModule > UGRidSMeshCompressionModule::m_modules;
 
 bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname)
 {
+	std::cout<<"jit file = "<<UGRID_SMESH_COMPRESS_JIT<<"\n";
+
 	if( data == 0 ) return false;
-//	cout<<"OutputDataObject:\n";
-//	data->PrintSelf(cout,vtkIndent(0));
+	std::cout<<"OutputDataObject:\n";
+	data->PrintSelf(std::cout,vtkIndent(0));
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast( data );
 	if( ugrid == 0 ) return false;
@@ -67,50 +76,17 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 
 	vtkUGridDescription ugrid_desc;
 	init_ugrid_description( ugrid_desc , ugrid );
-	UGridWrapper<UGRID_DESC> wrapper( ugrid_desc );
+	std::cout<<"ugrid initialized\n";
 
-	// wrap mesh arrays
-	auto cellValues = wrapper.cellValues(); // cell centered values
-	auto vertices = wrapper.vertices(); // vertex position and values
-	auto cells = wrapper.cells(); // cell-to-vertex connectivity
+	std::ostringstream oss;
+	printUGridSignature( ugrid, oss );
+	std::cout<<"signature = "<<oss.str()<<"\n";
 
-	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
-	vtkIdType nverts = ugrid->GetNumberOfPoints();
-	vtkIdType nCells = ugrid->GetNumberOfCells();
+	auto compress = UGRidSMeshCompressionModule::getFunction( oss.str() );	
 
-	// wraps direct (cell to vertex) and build reverse (vertex to cell) connectivity
-	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
-	auto v2c = make_v2c( c2v , nverts );
-	onika::debug::dbgassert( v2c.checkConsistency() );
-	cout<<nverts<<" vertices, "<<nCells <<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
+	int r = compress( &ugrid_desc, nedges, outfname ) ;
+	std::cout<<"result = "<<r<<"\n";
 
-	// build edge length metric and shortest edge based cell ordering
-	// when vertices have a complex type i.e. tuple of values, each of which can be a tuple,
-	// edge_length_op takes the first element and compute the distance based on the first element only.
-	// this is why it is important to place vertex coordinates first in the vertex definition
-	auto edgeLength = edge_length_op(vertices);
-	auto c2e = make_smesh_c2e(c2v);
-	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
-	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
-
-	std::ofstream ofile(outfname);
-    onika::codec::AsciiStream out(ofile);
-	cout<<"\n-------------- start compressing ----------------\n";
-	for(int c=0;c<nedges;c++)
-	{
-		auto minCell = * orderedCells.begin();
-		int minCellEdges = c2e.getCellNumberOfEdges(minCell);
-		auto edge = c2e.getCellEdge(minCell,0);
-		for(int i=1;i<minCellEdges;i++)
-		{
-			auto edge2 = c2e.getCellEdge(minCell,i);
-			if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
-		}
-		cout<<"Cell #"<<minCell<<", edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
-
-		onika::compress::smeshEdgeCollapseEncode(v2c, vertices, cellValues, edge, out);
-	}
-	onika::debug::dbgassert( v2c.checkConsistency() );
-
-	return 0;
+	return r != 0;
 }
+

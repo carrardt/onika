@@ -7,6 +7,7 @@
 #include "onika/mesh/vertex2cell.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
+#include "onika/container/arraywrapper.h"
 #include "onika/language.h"
 #include "onika/tuple.h"
 #include "ugriddesc.h"
@@ -26,30 +27,23 @@ namespace onika { namespace vtk {
 	struct ArrayWrapperSelector<T,1>
 	{
 		static inline auto wrap(T* array, vtkIdType n)
-		ONIKA_AUTO_RET(
-			container::array_wrapper( array , n )
-		)
+		ONIKA_AUTO_RET( container::array_wrapper( array , n ) )
 	};
-
-	template<class T,int NC>
-	inline auto make_array_wrapper( T* ptr, std::integral_constant<int,NC>, vtkIdType n )
-	ONIKA_AUTO_RET( ArrayWrapperSelector<T,NC>::wrap( ptr , n ) )
 
 	// Wraps a vtkDataSetAttribute (CellData or PointData)'s array to an onika container view
 	template<class T, int NC, bool CellData,int AI>
 	struct DataSetAttribute
 	{
-		static inline auto wrap( vtkUGridDescription& d ) const
+		static inline auto wrap( const vtkUGridDescription& d ) 
 		ONIKA_AUTO_RET(
-		  make_array_wrapper( safeCastPtr<T>( CellData ? d.cellArrays[AI] : d.vertexArrays[AI] ) ,
-				      ONIKA_CONST(NC) ,
-				      CellData ? d.nCells : d.nVertices )
+		  ArrayWrapperSelector<T,NC>::wrap( safeCastPtr<T>( CellData ? d.cellArrays[AI] : d.vertexArrays[AI] ) ,
+				      		    CellData ? d.nCells : d.nVertices )
 		  )
 	};
 
 	struct UGridCells
 	{
-		static inline auto wrap( vtkUGridDescription& d ) const
+		static inline auto wrap( const vtkUGridDescription& d ) 
 		ONIKA_AUTO_RET( container::array_wrapper( safeCastPtr<vtkIdType>( d.mesh ) , d.meshSize ) )
 	};
 

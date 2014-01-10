@@ -15,8 +15,10 @@ namespace jitti
 	{
 	public:
 		inline Function() : priv(0) { }
-		inline Function(const Function& f) : priv(f.priv) {}
+		inline Function( Function&& f) : priv(f.priv) { f.priv=0; }
+		inline Function( const Function& f ) : priv(f.priv) {}
 		inline Function( FunctionPriv* p) : priv(p) { }
+		inline Function& operator = ( Function&& f) { priv=f.priv; f.priv=0; }
 
 		void resetCallArgs();
 		void pushArgPtr(void * ptr);
@@ -72,10 +74,12 @@ namespace jitti
 	class Module
 	{
 	public:
+		inline Module() : priv(0) {}
 		Module( const Module& m );
-		Module( Module&& m );
-		Module( llvm::Module* mod );
+		inline Module( Module&& m ) : priv(m.priv) { m.priv=0; }
+		Module( llvm::Module* mod , char** args = 0 );
 		~Module();
+		inline Module& operator = ( Module&& m ) { priv=m.priv; m.priv=0; }
 		Function getFunction(const char* name);
 	private:
 		ModulePriv* priv;

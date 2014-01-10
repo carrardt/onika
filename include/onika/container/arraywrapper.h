@@ -88,7 +88,7 @@ namespace onika { namespace container {
 	// wrapper for arrays that describe tuple arrays with tuple elements serialized in array.
 	// i.e. : building a 3-tuple wrapper from an array containing x1,y1,z1,x2,y2,z2,...,xN,yN,zN
 	// will result in a container of 3-tuples (x1,y1,z1) , (x2,y2,z2) , ... , (xN,yN,zN)
-	template<class T,unsigned int... I>
+	template<class T,int... I>
 	auto flat_tuple_array_wrapper_aux( T* p, size_t sz, onika::tuple::indices<I...> ignored )
 	ONIKA_AUTO_RET( zip_vectors_cpy( array_wrapper<T,sizeof...(I)>(p+I,sz) ... ) )
 

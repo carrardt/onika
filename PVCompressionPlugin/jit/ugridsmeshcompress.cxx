@@ -1,21 +1,16 @@
-#include "vtkugridtetrawrapper.h"
 #include "onika/mesh/cell2vertex.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
 #include "onika/mesh/meshalgorithm.h"
 #include "onika/container/sequence.h"
-#include "onika/container/arraywrapper.h"
 #include "onika/debug/dbgassert.h"
 #include "onika/language.h"
+#include "onika/codec/asciistream.h"
+#include "onika/compress/edgecompress.h"
 
-#include <vtkUnstructuredGrid.h>
-#include <vtkXMLUnstructuredGridReader.h>
-#include <vtkFloatArray.h>
-#include <vtkDataArrayTemplate.h>
+#include "ugriddesc.h"
+#include "vtkugridtetrawrapper.h"
 
-#include "vtkUGridDescription.h"
-
-using std::cout;
 using namespace onika::vtk;
 using onika::mesh::edge_length_op;
 using onika::mesh::cell_shortest_edge_less;
@@ -26,48 +21,39 @@ using onika::tuple::types;
 template<int... I>
 using integers = onika::tuple::indices<I...>;
 
+#include <fstream>
+
 // convinient operators for std::stream
 template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
 template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ConstElementAccessorT<T> t ) { out << t.get(); return out; }
 template<class T> inline std::ostream& operator << ( std::ostream& out, onika::container::ElementAccessorT<T> t ) { out << t.get(); return out; }
 
-// definition of unstructured grid to pass test on
-#include "testdata.h"
+// must be provided by jitti at compile time
+// #define UGRID_DESC <...>
 
-int main(int argc, char* argv[])
+// C function signature simplifies function lookup by its name (no c++ mangling)
+extern "C"
 {
-	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
-	reader->SetFileName(UGRID_FILE);
-	reader->Update();
-//	cout<<"Reader:\n";
-//	reader->PrintSelf(cout,vtkIndent(0));
+	int ugridsmeshcompress(vtkUGridDescription*,int,const char*);
+}
 
-	vtkDataObject* data = reader->GetOutputDataObject(0);
-	if( data == 0 ) return 1;
-	cout<<"OutputDataObject:\n";
-	data->PrintSelf(cout,vtkIndent(0));
+int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* outfname)
+{
+	return 333;
+	if( ugrid_desc==0 || nedges<0 || outfname==0 ) return 0;
 
-	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast(data);
-	if( ugrid == 0 ) return 1;
-
-	if( ! allCellsAreTetras(ugrid) )
-	{
-		cout<<"Not a simplicial mesh\n";
-		return 1;
-	}
-
-	vtkUGridDescription ugrid_desc;
-	init_ugrid_description( ugrid_desc, ugrid );
-	UGridWrapper<UGRID_DESC> wrapper( ugrid_desc );
+	std::ofstream cout("/dev/stdout");
+	UGridWrapper<UGRID_DESC> wrapper( * ugrid_desc );
 
 	// wrap mesh arrays
 	auto cellValues = wrapper.cellValues(); // cell centered values
 	auto vertices = wrapper.vertices(); // vertex position and values
 	auto cells = wrapper.cells(); // cell-to-vertex connectivity
 
-	vtkIdType nverts = ugrid->GetNumberOfPoints();
-	vtkIdType nCells = ugrid->GetNumberOfCells();
+	vtkIdType nverts = vertices.size();
+	vtkIdType nCells = cellValues.size();
 
+	// wraps direct (cell to vertex) and build reverse (vertex to cell) connectivity
 	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
 	auto v2c = make_v2c( c2v , nverts );
 	onika::debug::dbgassert( v2c.checkConsistency() );
@@ -81,25 +67,26 @@ int main(int argc, char* argv[])
 	auto c2e = make_smesh_c2e(c2v);
 	auto shortestEdgeOrder = cell_shortest_edge_less( c2e, edgeLength);
 	auto orderedCells = ordered_cell_set(nCells, shortestEdgeOrder);
-	auto edge = std::tuple<vtkIdType,vtkIdType>( 461, 467 );
-	cout<<"edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 
-	auto maxEdgeLen = edgeLength(edge);
-
-	for(auto i : orderedCells)
+	std::ofstream ofile(outfname);
+	onika::codec::AsciiStream out(ofile);
+	cout<<"\n-------------- start compressing ----------------\n";
+	for(int c=0;c<nedges;c++)
 	{
-		int ne = c2e.getCellNumberOfEdges(i);
-//		cout<<"Cell "<<i<<" has "<<ne<<" edges";
-		for(int e=0;e<ne;e++)
+		auto minCell = * orderedCells.begin();
+		int minCellEdges = c2e.getCellNumberOfEdges(minCell);
+		auto edge = c2e.getCellEdge(minCell,0);
+		for(int i=1;i<minCellEdges;i++)
 		{
-			auto edge = c2e.getCellEdge(i,e);
-			auto len = edgeLength(edge);
-			if( len > maxEdgeLen ) maxEdgeLen = len;
-			//cout<<"\t"<<edge<<" : len="<<edgeLength(edge)<<"\n";
+			auto edge2 = c2e.getCellEdge(minCell,i);
+			if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
 		}
-	}
-	cout<< "Cell with shortest edge is "<< ( * orderedCells.begin() )<< "\n";
-	cout<< "longest edge length = "<<maxEdgeLen<< "\n";
+		cout<<"Cell #"<<minCell<<", edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
 
-	return 0;
+		onika::compress::smeshEdgeCollapseEncode(v2c, vertices, cellValues, edge, out);
+	}
+	onika::debug::dbgassert( v2c.checkConsistency() );
+
+	return 1;
 }
+

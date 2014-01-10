@@ -74,10 +74,10 @@ namespace jitti
 	float Function::getReturnValueAsFloat() { return priv->m_ret.FloatVal; }
 	double Function::getReturnValueAsDouble() { return priv->m_ret.DoubleVal; }
 
-
 	struct ModulePriv
 	{
 		llvm::Module* m_module;
+		char** m_args;
 		std::map<std::string,FunctionPriv> m_entryPoints;
 		llvm::ExecutionEngine* m_executionEngine;
 	};
@@ -87,15 +87,11 @@ namespace jitti
 		priv = new ModulePriv;
 		*priv = *(m.priv);
 	}
-	Module::Module( Module&& m )
-	{
-		priv = m.priv;
-		m.priv = 0;
-	}
-	Module::Module( llvm::Module* mod )
+	Module::Module( llvm::Module* mod, char** args )
 	{
 		priv = new ModulePriv;
 		priv->m_module = mod;
+		priv->m_args = args;
 		std::string Error;
 		priv->m_executionEngine = llvm::ExecutionEngine::createJIT(priv->m_module, &Error);
 		if ( ! priv->m_executionEngine )
@@ -118,7 +114,7 @@ namespace jitti
 		llvm::Function* F = priv->m_module->getFunction(name);
 		if ( F == 0 )
 		{
-		   	llvm::errs() <<"function '"<<name<< "'  not found in module.\n";
+		   	llvm::errs() <<"Function '"<<name<< "' not found in module.\n";
 		}
 		FunctionPriv fdata = { priv->m_executionEngine , F };
 		priv->m_entryPoints[name] = fdata; 
@@ -163,32 +159,49 @@ namespace jitti
 		}
 
 	public:
-		inline Module compileFile(const char* filePath, const char* args_in)
+		inline Module compileFile(const char* filePath, const char* opt_args)
 		{
-			  const char * MyArgs[256] = {"-xc++","-std=c++11","-c",0};
-			  int MyArgc = 0; while(MyArgs[MyArgc]!=0) ++MyArgc;
+			std::vector<std::string> argsv;
+			argsv.push_back("-xc++");
+			argsv.push_back("-std=c++11");
+			argsv.push_back("-O3");
+			argsv.push_back("-c");
 
-			  char* args = strdup(args_in);
-			  while( *args != '\0' && MyArgc<255 )
+			const char* p = opt_args;
+			while( *p != '\0' )
+			{
+				while( *p!='\0' && std::isspace(*p) ) ++p;
+				const char* s = p;
+				while( *p!='\0' && !std::isspace(*p) ) ++p;
+				argsv.push_back( std::string(s,p-s) );
+			}
+			argsv.push_back(filePath);
+
+			  int na = argsv.size();
+			  int total = 0;
+			  for(int i=0;i<na;i++) total += argsv[i].length()+1;
+
+			  char* argsa = new char [total];
+			  char** argsp = new char* [ na+1 ];
+			  for(int i=0;i<na;i++)
 			  {
-				  while( *args != '\0' && std::isspace(*args) ) { *args='\0'; ++args; }
-				  if( *args != '\0' ) MyArgs[MyArgc++] = args;
-				  while( *args != '\0' && ! std::isspace(*args) ) { ++args; }
+				  argsp[i] = argsa;
+				  strcpy( argsa, argsv[i].c_str() );
+				  argsa += argsv[i].length()+1;
 			  }
-			  MyArgs[MyArgc++] = filePath;
-			  MyArgs[MyArgc] = 0;
+			  argsp[na] = 0;
 
-			  for(int i=0;i<MyArgc;i++) llvm::errs() << MyArgs[i] << "\n";
+			  llvm::errs() << "clang";
+			  for(int i=0;i<na;i++) llvm::errs() << " "<< argsp[i] ;
+			  llvm::errs() <<"\n";
 
-			  clang::ArrayRef<const char*> argsRef(MyArgs,MyArgc);
+			  clang::ArrayRef<const char*> argsRef(argsp,na);
 			  compilation = driver->BuildCompilation(argsRef);
 			  if( compilation == 0 )
 			  {
 				  llvm::errs() << "Unable to build compilation";
 				  return 0;
 			  }
-//			  free(args);
-
 
 			  // We expect to get back exactly one command job, if we didn't something
 			  // failed. Extract that job from the compilation.
@@ -241,7 +254,7 @@ namespace jitti
 				  return 0;
 			  }
 
-			  return Module( codeGenAction->takeModule() );
+			  return Module( codeGenAction->takeModule() , argsp );
 		}
 	private:
 		clang::driver::Driver* driver;

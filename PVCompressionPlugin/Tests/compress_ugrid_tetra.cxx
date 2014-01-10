@@ -1,12 +1,12 @@
 #include <vtkXMLUnstructuredGridReader.h>
 #include <sys/time.h>
 #include "vtkUGridSMeshCompress.h"
-#include "testdata.h"
 
 using std::cout;
 int main(int argc, char* argv[])
 {
 	std::string outfname="/dev/stdout";
+	std::string infname="/dev/stdin";
 	int nedges = 1;
 
 	for(int i=1;i<argc;++i)
@@ -20,13 +20,18 @@ int main(int argc, char* argv[])
 		{
 			++i; outfname = argv[i];
 		}
+		else if( std::string(argv[i]) == "-i" )
+		{
+			++i; infname = argv[i];
+		}
 	}
 
+	std::cout<<"input = "<<infname<<"\n";
 	std::cout<<"output = "<<outfname<<"\n";
 	std::cout<<"edges = "<<nedges<<"\n";
 
 	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
-	reader->SetFileName(UGRID_FILE);
+	reader->SetFileName(infname.c_str());
 	reader->Update();
 	vtkDataObject* data = reader->GetOutputDataObject(0);
 
