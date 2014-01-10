@@ -35,12 +35,12 @@ namespace jitti
 		double getReturnValueAsDouble();
 
 		template<class... ArgT>
-		uint64_t operator () (const ArgT&... args)
+		void operator () (const ArgT&... args)
 		{
 			resetCallArgs();
 			PushArgs<ArgT...>::push_args(*this,args...);
 			call();
-			return getReturnValueAsULong();
+			/*return getReturnValueAsULong();*/
 		}
 		
 	private:

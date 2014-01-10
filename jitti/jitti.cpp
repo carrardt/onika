@@ -66,7 +66,8 @@ namespace jitti
 			llvm::errs() << "Execution error\n";
 			return;
 		}
-		priv->m_ret = priv->m_executionEngine->runFunction( priv->m_entryPoint, priv->m_args );
+
+		/*priv->m_ret = */ priv->m_executionEngine->runFunction( priv->m_entryPoint, priv->m_args );
 	}
 
 	void* Function::getReturnValueAsPtr() { return priv->m_ret.PointerVal; }
@@ -164,7 +165,7 @@ namespace jitti
 			std::vector<std::string> argsv;
 			argsv.push_back("-xc++");
 			argsv.push_back("-std=c++11");
-			argsv.push_back("-O3");
+			argsv.push_back("-g");
 			argsv.push_back("-c");
 
 			const char* p = opt_args;

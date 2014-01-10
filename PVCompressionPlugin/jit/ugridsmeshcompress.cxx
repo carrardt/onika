@@ -39,7 +39,6 @@ extern "C"
 
 int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* outfname)
 {
-	return 333;
 	if( ugrid_desc==0 || nedges<0 || outfname==0 ) return 0;
 
 	std::ofstream cout("/dev/stdout");

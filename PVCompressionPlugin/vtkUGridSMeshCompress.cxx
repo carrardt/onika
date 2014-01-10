@@ -67,8 +67,8 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 	std::cout<<"jit file = "<<UGRID_SMESH_COMPRESS_JIT<<"\n";
 
 	if( data == 0 ) return false;
-	std::cout<<"OutputDataObject:\n";
-	data->PrintSelf(std::cout,vtkIndent(0));
+//	std::cout<<"OutputDataObject:\n";
+//	data->PrintSelf(std::cout,vtkIndent(0));
 
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast( data );
 	if( ugrid == 0 ) return false;
@@ -84,9 +84,9 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 
 	auto compress = UGRidSMeshCompressionModule::getFunction( oss.str() );	
 
-	int r = compress( &ugrid_desc, nedges, outfname ) ;
-	std::cout<<"result = "<<r<<"\n";
+	compress( &ugrid_desc, nedges, outfname ) ;
+	//std::cout<<"result = "<<r<<"\n";
 
-	return r != 0;
+	return 1;
 }
 
