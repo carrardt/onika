@@ -14,53 +14,7 @@ using namespace onika::vtk;
 #error No path to JIT source file
 #endif
 
-struct UGRidSMeshCompressionModule
-{
-	jitti::Module module;
-	jitti::Function function;
-
-	inline UGRidSMeshCompressionModule()
-		{ }
-
-	inline UGRidSMeshCompressionModule( UGRidSMeshCompressionModule&& cm )
-		: module( std::move(cm.module) )
-		, function( std::move(cm.function) )
-		{ }
-	
-	inline UGRidSMeshCompressionModule( jitti::Module&& m, jitti::Function&& f )
-		: module(m)
-		, function(f)
-		{ }
-
-	inline  UGRidSMeshCompressionModule& operator = ( UGRidSMeshCompressionModule&& cm )
-	{
-		module = std::move( cm.module ) ;
-		function = std::move( cm.function ) ;
-	}
-	
-	static jitti::Function& getFunction( const std::string& sig )
-	{
-		auto it = m_modules.find( sig );
-		if( it != m_modules.end() )
-		{
-			return it->second.function;
-		}
-
-		std::string opt = "-DUGRID_DESC=" + sig ;
-		auto m = jitti::Compiler::createModuleFromFile(UGRID_SMESH_COMPRESS_JIT,opt.c_str());
-		auto f = m.getFunction("ugridsmeshcompress");
-		m_modules[sig] = UGRidSMeshCompressionModule( std::move(m) ,std::move(f) ) ;
-		return m_modules[sig].function; 
-	}
-
-	static std::map< std::string , UGRidSMeshCompressionModule > m_modules;
-
-private:
-	UGRidSMeshCompressionModule& operator = ( const UGRidSMeshCompressionModule& cm );
-	//UGRidSMeshCompressionModule( const UGRidSMeshCompressionModule& cm );
-};
-
-std::map< std::string , UGRidSMeshCompressionModule > UGRidSMeshCompressionModule::m_modules;
+static std::map< std::string , jitti::Module* > g_modules;
 
 bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname)
 {
@@ -73,6 +27,7 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 	vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::SafeDownCast( data );
 	if( ugrid == 0 ) return false;
 	if( ! allCellsAreTetras(ugrid) ) return false;
+	std::cout<<"simplicial mesh ok : "<<ugrid->GetNumberOfPoints()<<" points, "<<ugrid->GetNumberOfCells()<<" cells\n";
 
 	vtkUGridDescription ugrid_desc;
 	init_ugrid_description( ugrid_desc , ugrid );
@@ -80,12 +35,30 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 
 	std::ostringstream oss;
 	printUGridSignature( ugrid, oss );
-	std::cout<<"signature = "<<oss.str()<<"\n";
+	std::string sig = oss.str();
+	std::cout<<"signature = "<<sig<<"\n";
 
-	auto compress = UGRidSMeshCompressionModule::getFunction( oss.str() );	
+	jitti::Module* m = 0;
+	auto it = g_modules.find( sig );
+	if( it != g_modules.end() )
+	{
+		m = it->second;
+	}
+	else
+	{
+		std::string opt("-DUGRID_DESC=" + sig);
+		m = jitti::Compiler::createModuleFromFile(UGRID_SMESH_COMPRESS_JIT,opt.c_str());
+		auto module_init = m->getFunction("initialize");
+		std::cout<<"initialize module ...\n";
+		module_init();
+		g_modules[sig] = m;
+	}
+	std::cout<<"module compiled @"<<m<<"\n";
+
+	auto compress = m->getFunction( "ugridsmeshcompress" );
 
 	compress( &ugrid_desc, nedges, outfname ) ;
-	//std::cout<<"result = "<<r<<"\n";
+	std::cout<<"done\n";
 
 	return 1;
 }

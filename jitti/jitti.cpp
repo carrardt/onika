@@ -50,6 +50,18 @@ namespace jitti
 		llvm::GenericValue m_ret;
 	};
 
+	Function::Function( llvm::ExecutionEngine* ee, llvm::Function* f )
+	{
+		priv = new FunctionPriv;
+		priv->m_executionEngine = ee;
+		priv->m_entryPoint = f;
+	}
+
+	Function::~Function()
+	{
+		if(priv!=0) { delete priv; }
+	}
+
 	void Function::resetCallArgs() { priv->m_args.clear(); }
 	void Function::pushArgPtr(void * ptr) { llvm::GenericValue val; val.PointerVal=ptr; priv->m_args.push_back(val); } 
 	void Function::pushArgInt(const int & x)  { llvm::GenericValue val; val.IntVal=llvm::APInt(sizeof(x)*8,x,true); priv->m_args.push_back(val); } 
@@ -66,8 +78,7 @@ namespace jitti
 			llvm::errs() << "Execution error\n";
 			return;
 		}
-
-		/*priv->m_ret = */ priv->m_executionEngine->runFunction( priv->m_entryPoint, priv->m_args );
+		priv->m_ret = priv->m_executionEngine->runFunction( priv->m_entryPoint, priv->m_args );
 	}
 
 	void* Function::getReturnValueAsPtr() { return priv->m_ret.PointerVal; }
@@ -79,15 +90,20 @@ namespace jitti
 	{
 		llvm::Module* m_module;
 		char** m_args;
-		std::map<std::string,FunctionPriv> m_entryPoints;
+		std::map<std::string,Function*> m_entryPoints;
 		llvm::ExecutionEngine* m_executionEngine;
+		inline ~ModulePriv()
+		{
+			for( auto it : m_entryPoints ) delete it.second;
+			delete m_module;
+			if( m_args != 0 )
+			{
+				if( *m_args != 0 ) delete [] *m_args;
+				delete [] m_args;
+			}
+		}
 	};
 
-	Module::Module( const Module& m )
-	{
-		priv = new ModulePriv;
-		*priv = *(m.priv);
-	}
 	Module::Module( llvm::Module* mod, char** args )
 	{
 		priv = new ModulePriv;
@@ -105,21 +121,21 @@ namespace jitti
 		if( priv != 0 ) delete priv;
 	}
 
-	Function Module::getFunction(const char* name)
+	Function& Module::getFunction(const char* name)
 	{
 		auto it = priv->m_entryPoints.find(name);
 		if( it != priv->m_entryPoints.end() )
 		{
-			return Function( & it->second );
+			return * ( it->second );
 		}
 		llvm::Function* F = priv->m_module->getFunction(name);
 		if ( F == 0 )
 		{
 		   	llvm::errs() <<"Function '"<<name<< "' not found in module.\n";
 		}
-		FunctionPriv fdata = { priv->m_executionEngine , F };
-		priv->m_entryPoints[name] = fdata; 
-		return Function( & priv->m_entryPoints[name] );
+		Function * mf = new Function( priv->m_executionEngine , F );
+		priv->m_entryPoints[name] = mf;
+		return * mf;
 	}
 
 	class CompilerImp
@@ -160,7 +176,7 @@ namespace jitti
 		}
 
 	public:
-		inline Module compileFile(const char* filePath, const char* opt_args)
+		inline Module* compileFile(const char* filePath, const char* opt_args)
 		{
 			std::vector<std::string> argsv;
 			argsv.push_back("-xc++");
@@ -255,7 +271,7 @@ namespace jitti
 				  return 0;
 			  }
 
-			  return Module( codeGenAction->takeModule() , argsp );
+			  return new Module( codeGenAction->takeModule() , argsp );
 		}
 	private:
 		clang::driver::Driver* driver;
@@ -269,7 +285,7 @@ namespace jitti
 
 	CompilerImp* CompilerImp::c_instance = 0;
 	
-	Module Compiler::createModuleFromFile(const char* filePath,const char* opt_args)
+	Module* Compiler::createModuleFromFile(const char* filePath,const char* opt_args)
 	{
 		return CompilerImp::instance()->compileFile(filePath,opt_args);
 	}

@@ -1,16 +1,14 @@
 #ifndef __dbgmessage_h
 #define __dbgmessage_h
 
-#if defined(_DEBUG) || defined(DEBUG)
-#include <iostream>
-#else
+#include "onika/sysio.h"
 #include "onika/codec/nullstream.h"
-#endif
+#include "onika/language.h"
 
 namespace onika { namespace debug {
 
 #if defined(_DEBUG) || defined(DEBUG)
-inline auto dbgmessage() -> decltype(std::cerr)& { return std::cerr; }
+inline auto dbgmessage() ONIKA_AUTO_RET( onika::sys::dbg() )
 #else
 inline codec::NullStream dbgmessage() { return codec::NullStream(); }
 #endif

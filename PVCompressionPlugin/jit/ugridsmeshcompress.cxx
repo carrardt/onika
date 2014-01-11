@@ -7,6 +7,7 @@
 #include "onika/language.h"
 #include "onika/codec/asciistream.h"
 #include "onika/compress/edgecompress.h"
+#include "onika/sysio.h"
 
 #include "ugriddesc.h"
 #include "vtkugridtetrawrapper.h"
@@ -17,11 +18,11 @@ using onika::mesh::cell_shortest_edge_less;
 using onika::mesh::make_smesh_c2e;
 using onika::mesh::ordered_cell_set;
 using onika::tuple::types;
+using onika::sys::info;
+using onika::sys::err;
 
 template<int... I>
 using integers = onika::tuple::indices<I...>;
-
-#include <fstream>
 
 // convinient operators for std::stream
 template<class... T> inline std::ostream& operator << ( std::ostream& out, const std::tuple<T...>& t ) { onika::tuple::print( out, t ); return out; }
@@ -34,29 +35,39 @@ template<class T> inline std::ostream& operator << ( std::ostream& out, onika::c
 // C function signature simplifies function lookup by its name (no c++ mangling)
 extern "C"
 {
+	void initialize();
 	int ugridsmeshcompress(vtkUGridDescription*,int,const char*);
+}
+
+void initialize()
+{
+	onika::sys::initialize_sys_io();
 }
 
 int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* outfname)
 {
+	info()<<"ugridsmeshcompress started\n"; info().flush();
+
 	if( ugrid_desc==0 || nedges<0 || outfname==0 ) return 0;
 
-	std::ofstream cout("/dev/stdout");
+	info()<<"make wrapper\n"; info().flush();
 	UGridWrapper<UGRID_DESC> wrapper( * ugrid_desc );
 
 	// wrap mesh arrays
+	info()<<"wrap tuple arrays\n"; info().flush();
 	auto cellValues = wrapper.cellValues(); // cell centered values
 	auto vertices = wrapper.vertices(); // vertex position and values
 	auto cells = wrapper.cells(); // cell-to-vertex connectivity
 
 	vtkIdType nverts = vertices.size();
 	vtkIdType nCells = cellValues.size();
+	info()<<nverts<<" vertices, "<<nCells <<" cells\n"; info().flush();
 
 	// wraps direct (cell to vertex) and build reverse (vertex to cell) connectivity
 	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
 	auto v2c = make_v2c( c2v , nverts );
 	onika::debug::dbgassert( v2c.checkConsistency() );
-	cout<<nverts<<" vertices, "<<nCells <<" cells, mem="<<onika::container::memory_bytes(cells)<<"\n";
+	info()<<"mem="<<onika::container::memory_bytes(cells)<<"\n"; info().flush();
 
 	// build edge length metric and shortest edge based cell ordering
 	// when vertices have a complex type i.e. tuple of values, each of which can be a tuple,
@@ -69,7 +80,7 @@ int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* 
 
 	std::ofstream ofile(outfname);
 	onika::codec::AsciiStream out(ofile);
-	cout<<"\n-------------- start compressing ----------------\n";
+	info()<<"\n-------------- start compressing ----------------\n"; info().flush();
 	for(int c=0;c<nedges;c++)
 	{
 		auto minCell = * orderedCells.begin();
@@ -80,7 +91,7 @@ int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* 
 			auto edge2 = c2e.getCellEdge(minCell,i);
 			if( edgeLength(edge2) < edgeLength(edge) ) edge = edge2;
 		}
-		cout<<"Cell #"<<minCell<<", edge "<<edge<<" length = "<<edgeLength(edge)<<"\n";
+		info()<<"Cell #"<<minCell<<", edge "<<edge<<" length = "<<edgeLength(edge)<<"\n"; info().flush();
 
 		onika::compress::smeshEdgeCollapseEncode(v2c, vertices, cellValues, edge, out);
 	}

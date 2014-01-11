@@ -4,6 +4,7 @@ namespace llvm
 {
 	class Module;
 	class ExecutionEngine;
+	class Function;
 }
 
 namespace jitti
@@ -14,11 +15,8 @@ namespace jitti
 	class Function
 	{
 	public:
-		inline Function() : priv(0) { }
-		inline Function( Function&& f) : priv(f.priv) { f.priv=0; }
-		inline Function( const Function& f ) : priv(f.priv) {}
-		inline Function( FunctionPriv* p) : priv(p) { }
-		inline Function& operator = ( Function&& f) { priv=f.priv; f.priv=0; }
+		Function( llvm::ExecutionEngine* ee, llvm::Function* f );
+		~Function();
 
 		void resetCallArgs();
 		void pushArgPtr(void * ptr);
@@ -35,14 +33,14 @@ namespace jitti
 		double getReturnValueAsDouble();
 
 		template<class... ArgT>
-		void operator () (const ArgT&... args)
+		int operator () (const ArgT&... args)
 		{
 			resetCallArgs();
 			PushArgs<ArgT...>::push_args(*this,args...);
 			call();
-			/*return getReturnValueAsULong();*/
+			return getReturnValueAsULong();
 		}
-		
+
 	private:
 		FunctionPriv* priv;
 	};
@@ -74,13 +72,9 @@ namespace jitti
 	class Module
 	{
 	public:
-		inline Module() : priv(0) {}
-		Module( const Module& m );
-		inline Module( Module&& m ) : priv(m.priv) { m.priv=0; }
-		Module( llvm::Module* mod , char** args = 0 );
+		Module( llvm::Module* mod , char** compile_args );
 		~Module();
-		inline Module& operator = ( Module&& m ) { priv=m.priv; m.priv=0; }
-		Function getFunction(const char* name);
+		Function& getFunction(const char* name);
 	private:
 		ModulePriv* priv;
 	};
@@ -88,7 +82,7 @@ namespace jitti
 	class Compiler
 	{
 	public:
-		static Module createModuleFromFile(const char* filePath,const char* opt_args="");
+		static Module* createModuleFromFile(const char* filePath,const char* opt_args="");
 	};
 }
 
