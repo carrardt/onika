@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "onika/sysio.h"
 
 namespace onika { namespace vtk {
 
@@ -26,19 +27,44 @@ namespace onika { namespace vtk {
 	static constexpr int vtk_VTK_UNSIGNED_LONG_LONG = 17;
 
 	template<class T> struct TypeEnum { static constexpr int value = vtk_VTK_VOID; };
-	template<> struct TypeEnum<unsigned char> { static constexpr int value = vtk_VTK_UNSIGNED_CHAR; };
-	template<> struct TypeEnum<signed char> { static constexpr int value = vtk_VTK_SIGNED_CHAR; };
-	template<> struct TypeEnum<short> { static constexpr int value = vtk_VTK_SHORT; };
-	template<> struct TypeEnum<unsigned short> { static constexpr int value = vtk_VTK_UNSIGNED_SHORT; };
-	template<> struct TypeEnum<int> { static constexpr int value = vtk_VTK_INT; };
-	template<> struct TypeEnum<unsigned int> { static constexpr int value = vtk_VTK_UNSIGNED_INT; };
-	template<> struct TypeEnum<long> { static constexpr int value = vtk_VTK_LONG; };
-	template<> struct TypeEnum<unsigned long> { static constexpr int value = vtk_VTK_UNSIGNED_LONG; };
-	template<> struct TypeEnum<float> { static constexpr int value = vtk_VTK_FLOAT; };
-	template<> struct TypeEnum<double> { static constexpr int value = vtk_VTK_DOUBLE; };
-	//template<> struct TypeEnum<vtkIdType> { static constexpr int value = vtk_VTK_ID_TYPE; };
-	template<> struct TypeEnum<long long> { static constexpr int value = vtk_VTK_LONG_LONG; };
-	template<> struct TypeEnum<unsigned long long> { static constexpr int value = vtk_VTK_UNSIGNED_LONG_LONG; };
+#define ONIKA_VTK_TYPE_MACRO(T,E) template<> struct TypeEnum<T> { static constexpr int value = vtk_VTK_##E; }
+	ONIKA_VTK_TYPE_MACRO(unsigned char,UNSIGNED_CHAR);
+	ONIKA_VTK_TYPE_MACRO(signed char,SIGNED_CHAR);
+	ONIKA_VTK_TYPE_MACRO(short,SHORT);
+	ONIKA_VTK_TYPE_MACRO(unsigned short,UNSIGNED_SHORT);
+	ONIKA_VTK_TYPE_MACRO(int,INT);
+	ONIKA_VTK_TYPE_MACRO(unsigned int,UNSIGNED_INT);
+	ONIKA_VTK_TYPE_MACRO(long,LONG);
+	ONIKA_VTK_TYPE_MACRO(unsigned long,UNSIGNED_LONG);
+	ONIKA_VTK_TYPE_MACRO(float,FLOAT);
+	ONIKA_VTK_TYPE_MACRO(double,DOUBLE);
+	//ONIKA_VTK_TYPE_MACRO(vtkIdType,ID_TYPE);
+	ONIKA_VTK_TYPE_MACRO(long long,LONG_LONG);
+	ONIKA_VTK_TYPE_MACRO(unsigned long long,UNSIGNED_LONG_LONG);
+#undef ONIKA_VTK_TYPE_MACRO
+	static inline const char* typeString(int value)
+	{
+		switch(value)
+		{
+#define ONIKA_VTK_TYPE_MACRO(T,E) case vtk_VTK_##E: return #T;
+	ONIKA_VTK_TYPE_MACRO(void,VOID);
+	ONIKA_VTK_TYPE_MACRO(unsigned char,UNSIGNED_CHAR);
+	ONIKA_VTK_TYPE_MACRO(signed char,SIGNED_CHAR);
+	ONIKA_VTK_TYPE_MACRO(short,SHORT);
+	ONIKA_VTK_TYPE_MACRO(unsigned short,UNSIGNED_SHORT);
+	ONIKA_VTK_TYPE_MACRO(int,INT);
+	ONIKA_VTK_TYPE_MACRO(unsigned int,UNSIGNED_INT);
+	ONIKA_VTK_TYPE_MACRO(long,LONG);
+	ONIKA_VTK_TYPE_MACRO(unsigned long,UNSIGNED_LONG);
+	ONIKA_VTK_TYPE_MACRO(float,FLOAT);
+	ONIKA_VTK_TYPE_MACRO(double,DOUBLE);
+	//ONIKA_VTK_TYPE_MACRO(vtkIdType,ID_TYPE);
+	ONIKA_VTK_TYPE_MACRO(long long,LONG_LONG);
+	ONIKA_VTK_TYPE_MACRO(unsigned long long,UNSIGNED_LONG_LONG);
+#undef ONIKA_VTK_TYPE_MACRO
+		default: return "<type error>";
+		}
+	}
 
 	struct vtkArrayDescription
 	{
@@ -46,12 +72,24 @@ namespace onika { namespace vtk {
 		int type, components;
 		std::string name;
 		inline vtkArrayDescription() : ptr(0), type(vtk_VTK_VOID), components(0) {}
+		template<class StreamT>
+		inline StreamT& print(StreamT& out)
+		{
+			out<<"ptr="<<ptr<<",type="<<typeString(type)<<",nc="<<components<<",name='"<<name<<"'";
+			return out;
+		}
 	};
 
 	template<class T>
 	static T* safeCastPtr(const vtkArrayDescription& ad)
 	{
-		if( TypeEnum<T>::value != ad.type ) { return 0; }
+		if( TypeEnum<T>::value != ad.type )
+		{
+			onika::sys::err() << "Array '"<<ad.name<<"' has type "<<ad.type<<"("<<typeString(ad.type)
+			<<") but type "<<typeString(TypeEnum<T>::value)<<" expected\n";
+			onika::sys::err().flush();
+			return 0;
+		}
 		else return static_cast<T*>( ad.ptr );
 	}
 
@@ -62,6 +100,17 @@ namespace onika { namespace vtk {
 		vtkArrayDescription mesh;
 		vtkIdType meshSize, nCells, nVertices;
 		inline vtkUGridDescription() : meshSize(0), nCells(0), nVertices(0) {}
+
+		template<class StreamT>
+		inline StreamT& print(StreamT& out)
+		{
+			out<<"mesh: "; mesh.print(out); out<<" (size="<<meshSize<<")\n";
+			out<<cellArrays.size()<<" cell arrays, "<<nCells<<" cells\n";
+			for(int i=0;i<cellArrays.size();i++) { out<<i<<": "; cellArrays[i].print(out); out<<"\n"; }
+			out<<vertexArrays.size()<<" vertex arrays, "<<nVertices<<" vertices\n";
+			for(int i=0;i<vertexArrays.size();i++) { out<<i<<": "; vertexArrays[i].print(out); out<<"\n"; }
+			return out;
+		}
 	};
 
 } }

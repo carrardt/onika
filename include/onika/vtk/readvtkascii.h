@@ -51,7 +51,7 @@ inline bool readVtkAsciiScalars(Stream& file, Mesh& mesh)
 {
 	if( !file )
 	{
-		std::cout<<"FAILED"<<std::endl;
+		onika::sys::err()<<"FAILED\n";
 		return false;
 	}
 

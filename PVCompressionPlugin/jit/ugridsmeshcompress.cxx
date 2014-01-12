@@ -41,7 +41,7 @@ extern "C"
 
 void initialize()
 {
-	onika::sys::initialize_sys_io();
+	info()<<"ugridsmeshcompress up and running\n";
 }
 
 int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* outfname)
@@ -65,6 +65,7 @@ int ugridsmeshcompress(vtkUGridDescription *ugrid_desc, int nedges, const char* 
 
 	// wraps direct (cell to vertex) and build reverse (vertex to cell) connectivity
 	auto c2v = wrap_ugrid_smesh_c2v( cells, ONIKA_CONST(3) );
+	info()<<"check connectivity : "<< c2v.checkConsistency(nverts)<<"\n"; info().flush();
 	auto v2c = make_v2c( c2v , nverts );
 	onika::debug::dbgassert( v2c.checkConsistency() );
 	info()<<"mem="<<onika::container::memory_bytes(cells)<<"\n"; info().flush();

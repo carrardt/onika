@@ -6,19 +6,24 @@
 
 namespace onika { namespace sys {
 
-	std::ofstream* stdout = 0;
-	std::ofstream* stderr = 0;
+	static std::ofstream* g_stdout = 0;
+	static std::ofstream* g_stderr = 0;
 
-	static inline void initialize_sys_io()
+	static inline std::ofstream& stdout()
 	{
-		stdout = new std::ofstream("/dev/stdout");
-		stderr = new std::ofstream("/dev/stderr");
+		if( g_stdout == 0 ) { g_stdout = new std::ofstream("/dev/stdout"); }
+		return *g_stdout;
 	}
 
-	static inline auto info() ONIKA_AUTO_RET( *stdout )
-	static inline auto dbg() ONIKA_AUTO_RET( *stdout )
-	static inline auto err() ONIKA_AUTO_RET( *stderr )
+	static inline std::ofstream& stderr()
+	{
+		if( g_stderr == 0 ) { g_stderr = new std::ofstream("/dev/stderr"); }
+		return *g_stderr;
+	}
 
+	static inline auto info() ONIKA_AUTO_RET( stdout() )
+	static inline auto dbg() ONIKA_AUTO_RET( stdout() )
+	static inline auto err() ONIKA_AUTO_RET( stderr() )
 } }
 
 #endif

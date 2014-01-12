@@ -2,7 +2,7 @@
 #define __dbgassert_h
 
 #include <assert.h>
-#include <iostream>
+#include "onika/sysio.h"
 
 namespace onika { namespace debug {
 
@@ -10,7 +10,7 @@ namespace onika { namespace debug {
 #define dbgassert(x) _dbgassert(x,#x,__FILE__,__LINE__)
 inline void _dbgassert(bool x,const char* condText,const char* file,int line)
 	{
-		if(!x) { std::cerr<<"Assertion '"<<condText<<"' failed at "<<file<<":"<<line<<std::endl; abort(); }
+		if(!x) { onika::sys::err()<<"Assertion '"<<condText<<"' failed at "<<file<<":"<<line<<"\n"; abort(); }
 		//assert(x);
 	}
 #else

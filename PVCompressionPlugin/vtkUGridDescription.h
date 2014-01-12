@@ -35,9 +35,9 @@ namespace onika { namespace vtk {
 	template<class StreamT>
 	static inline void printUGridSignature( vtkUnstructuredGrid* data, StreamT& out )
 	{
-		printAttributeSignature(data->GetCellData(),data->GetPoints()->GetData(),out);
+		printAttributeSignature(data->GetCellData(),0,out);
 		out<<',';
-		printAttributeSignature(data->GetPointData(),0,out);
+		printAttributeSignature(data->GetPointData(),data->GetPoints()->GetData(),out);
 	}
 
 	template<int Dim>

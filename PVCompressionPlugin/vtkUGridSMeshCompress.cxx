@@ -36,7 +36,6 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 	std::ostringstream oss;
 	printUGridSignature( ugrid, oss );
 	std::string sig = oss.str();
-	std::cout<<"signature = "<<sig<<"\n";
 
 	jitti::Module* m = 0;
 	auto it = g_modules.find( sig );
@@ -47,13 +46,14 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 	else
 	{
 		std::string opt("-DUGRID_DESC=" + sig);
+		std::cout<<"compiling module ("<<sig<<")\n";
 		m = jitti::Compiler::createModuleFromFile(UGRID_SMESH_COMPRESS_JIT,opt.c_str());
 		auto module_init = m->getFunction("initialize");
-		std::cout<<"initialize module ...\n";
+		std::cout<<"initializing module ...\n";
 		module_init();
 		g_modules[sig] = m;
 	}
-	std::cout<<"module compiled @"<<m<<"\n";
+	std::cout<<"module found @"<<m<<"\n";
 
 	auto compress = m->getFunction( "ugridsmeshcompress" );
 

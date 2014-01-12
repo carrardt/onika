@@ -16,6 +16,10 @@ namespace onika { namespace vtk {
 		const char* s = array->GetName();
 		ad.name = (s==0) ? "" : s;
 		ad.type = array->GetDataType();
+		if( ad.type == onika::vtk::vtk_VTK_ID_TYPE )
+		{
+			ad.type = onika::vtk::vtk_VTK_LONG_LONG;
+		}
 		ad.components = array->GetNumberOfComponents();
 		ad.ptr = array->GetVoidPointer(0);
 	}

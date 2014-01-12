@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 	}
 
 	onika::codec::AsciiStream out(std::cout);
-	onika::codec::InputBitStream<std::ifstream> in(ifile,std::cout);
+	onika::codec::InputBitStream<std::ifstream,std::ostream> in(ifile,std::cout);
 
 	bool endOfTest = false;
 	do

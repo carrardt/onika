@@ -31,20 +31,23 @@ namespace onika { namespace vtk {
 	};
 
 	// Wraps a vtkDataSetAttribute (CellData or PointData)'s array to an onika container view
-	template<class T, int NC, bool CellData,int AI>
-	struct DataSetAttribute
+	template<class T, int NC, int AI>
+	struct CellDataArray
 	{
 		static inline auto wrap( const vtkUGridDescription& d ) 
-		ONIKA_AUTO_RET(
-		  ArrayWrapperSelector<T,NC>::wrap( safeCastPtr<T>( CellData ? d.cellArrays[AI] : d.vertexArrays[AI] ) ,
-				      		    CellData ? d.nCells : d.nVertices )
-		  )
+		ONIKA_AUTO_RET( ArrayWrapperSelector<T,NC>::wrap( safeCastPtr<T>(d.cellArrays[AI]), d.nCells ) )
+	};
+	template<class T, int NC, int AI>
+	struct PointDataArray
+	{
+		static inline auto wrap( const vtkUGridDescription& d )
+		ONIKA_AUTO_RET( ArrayWrapperSelector<T,NC>::wrap( safeCastPtr<T>(d.vertexArrays[AI]), d.nVertices ) )
 	};
 
 	struct UGridCells
 	{
 		static inline auto wrap( const vtkUGridDescription& d ) 
-		ONIKA_AUTO_RET( container::array_wrapper( safeCastPtr<vtkIdType>( d.mesh ) , d.meshSize ) )
+		ONIKA_AUTO_RET( container::array_wrapper( safeCastPtr<long long>( d.mesh ) , d.meshSize ) )
 	};
 
 	template< class CT, class CS, class PT, class PS,
@@ -58,16 +61,20 @@ namespace onika { namespace vtk {
 		static constexpr int NCA = CT::count;
 		static constexpr int NPA = PT::count;
 
-		inline UGridWrapper(const vtkUGridDescription& d ) : ugrid( d ) {}
+		inline UGridWrapper(const vtkUGridDescription& d ) : ugrid( d )
+		{
+			onika::debug::dbgassert( d.cellArrays.size() == NCA );
+			onika::debug::dbgassert( d.vertexArrays.size() == NPA );
+		}
 
 	private:
 		template<class... T, int ... S, int... I>
 		inline auto vertices_aux( tuple::types<T...> , tuple::indices<S...> , tuple::indices<I...> )
-		ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,false,I>().wrap(ugrid))... ) )
+		ONIKA_AUTO_RET( zip_vectors_cpy( (PointDataArray<T,S,I>().wrap(ugrid))... ) )
 
 		template<class... T, int ... S, int... I>
 		inline auto cellValues_aux( tuple::types<T...> , tuple::indices<S...> , tuple::indices<I...> )
-		ONIKA_AUTO_RET( zip_vectors_cpy( (DataSetAttribute<T,S,true,I>::wrap(ugrid))... ) )
+		ONIKA_AUTO_RET( zip_vectors_cpy( (CellDataArray<T,S,I>::wrap(ugrid))... ) )
 
 	public:
 		inline auto cellValues() ONIKA_AUTO_RET( this->cellValues_aux(CT(),CS(),tuple::make_indices<NCA>()) )

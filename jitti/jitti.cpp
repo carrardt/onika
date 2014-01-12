@@ -181,7 +181,7 @@ namespace jitti
 			std::vector<std::string> argsv;
 			argsv.push_back("-xc++");
 			argsv.push_back("-std=c++11");
-			argsv.push_back("-g");
+			argsv.push_back("-O3");
 			argsv.push_back("-c");
 
 			const char* p = opt_args;

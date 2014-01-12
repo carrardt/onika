@@ -4,6 +4,7 @@
 #include "onika/container/iterator.h"
 #include "onika/container/sequence.h"
 #include "onika/debug/dbgassert.h"
+#include "onika/debug/dbgmessage.h"
 #include "onika/language.h"
 
 namespace onika { namespace container {
@@ -228,7 +229,7 @@ namespace std
 		onika::container::JournalizedVector<B,W,I> & jvec = accA.v;
 		onika::debug::dbgassert( ( & jvec ) == ( & accB.v ) );
 
-		std::cout<<"JVec swap\n";
+		onika::debug::dbgmessage()<<"JVec swap\n";
 		std::swap( jvec.m_indices[accA.i] , jvec.m_indices[accB.i] );
 	}
 
@@ -240,7 +241,7 @@ namespace std
 		onika::container::JournalizedVector<B,W,I> & jvec = itA.vec;
 		onika::debug::dbgassert( ( & jvec ) == ( & itB.vec ) );
 
-		std::cout<<"JVec iter_swap\n";
+		onika::debug::dbgmessage()<<"JVec iter_swap\n";
 		std::swap( jvec.m_indices[itA.i] , jvec.m_indices[itB.i] );
 	}
 
@@ -252,7 +253,6 @@ namespace std
 	{ \
 		onika::container::JournalizedVector<B,W,I> & jvec = itA.vec; \
 		onika::debug::dbgassert( ( & jvec ) == ( & itB.vec ) ); \
-		/*std::cout<<"JVec "<<#_F<<"\n";*/ \
 		size_t ai = itA.i; \
 		size_t bi = itB.i; \
 		std::_F(jvec.m_indices.begin()+ai , \
@@ -268,7 +268,6 @@ namespace std
 	{ \
 		onika::container::JournalizedVector<B,W,I> & jvec = itA.vec; \
 		onika::debug::dbgassert( ( & jvec ) == ( & itB.vec ) ); \
-		/*std::cout<<"JVec "<<#_F<<"\n";*/ \
 		size_t ai = itA.i; \
 		size_t bi = itB.i; \
 		std::_F(jvec.m_indices.begin()+ai , \

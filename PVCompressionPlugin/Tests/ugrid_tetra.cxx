@@ -36,10 +36,13 @@ template<class T> inline std::ostream& operator << ( std::ostream& out, onika::c
 
 int main(int argc, char* argv[])
 {
+	onika::sys::stdout() << "stdout ready\n"; onika::sys::stdout().flush();
+	onika::sys::stderr() << "stderr ready\n"; onika::sys::stderr().flush();
+
 	vtkXMLUnstructuredGridReader* reader = vtkXMLUnstructuredGridReader::New();
 	reader->SetFileName(UGRID_FILE);
+	cout<<"reading "<<UGRID_FILE<<" ...\n";
 	reader->Update();
-//	cout<<"Reader:\n";
 //	reader->PrintSelf(cout,vtkIndent(0));
 
 	vtkDataObject* data = reader->GetOutputDataObject(0);
@@ -56,8 +59,12 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
+	cout<<"initialize ugrid description\n";
 	vtkUGridDescription ugrid_desc;
 	init_ugrid_description( ugrid_desc, ugrid );
+	ugrid_desc.print( std::cout );
+
+	cout<<"create wrapper\n";
 	UGridWrapper<UGRID_DESC> wrapper( ugrid_desc );
 
 	// wrap mesh arrays

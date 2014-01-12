@@ -8,17 +8,17 @@
 #include "onika/poweroftwo.h"
 #include "onika/bits.h"
 
-#include <iostream>
 #include <map>
 #include <vector>
 
 namespace onika { namespace codec {
 
-	template<typename _StreamT>
+	template<class _StreamT, class _DbgStreamT>
 	struct InputBitStream
 	{
-		typedef _StreamT Stream;
-		typedef uint64_t Word;
+		using Stream = _StreamT;
+		using DbgStream = _DbgStreamT;
+		using Word = uint64_t;
 		enum
 		{
 			WORD_BITS = sizeof(Word)*8,
@@ -31,7 +31,7 @@ namespace onika { namespace codec {
 			, MAX_STRING_LEN = 256
 		}; 
 
-		inline InputBitStream(Stream& s, std::ostream& dbgout=std::cout )
+		inline InputBitStream(Stream& s, DbgStream& dbgout )
 			: stream(s)
 			, dbgstream(dbgout)
 			, cursor_word(0)
@@ -217,7 +217,7 @@ namespace onika { namespace codec {
 		}
 
 		Stream& stream;
-		std::ostream& dbgstream;
+		DbgStream& dbgstream;
 		Word buffer[BUFFER_SIZE];
 		uint64_t streampos;
 		uint32_t bufferSize;
