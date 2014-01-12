@@ -1,2 +1,15 @@
 FIXME: intel compiler 13.0 with -std=c++11 does not compile tuple_TEST.cpp
 
+TODO:
+	Streams
+		- OutputBitStream = low-level stream.
+			must support write of basic types + n-bits integers.
+			must provide function to get current stream position.
+			return stream position after write.
+			might be a buffer writer only.
+			might throw exception or execute callback on buffer full event.
+			maximum write size should be 8/16 bytes, so that it is safe to write before detecting that buffer is full.	
+		- unified intermediate stream, converts high level tokens to low-level elements.
+			eventually handles markers insertion to post process stream buffer knowing position of high-level tokens in bitstream
+		- high level stream, defines << operator for high-level tokens. high-level tokens include debug message token
+		

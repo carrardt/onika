@@ -115,6 +115,9 @@ namespace onika { namespace codec {
 	 * TODO: type specialization to let double and float as single value, not bounded value
 	 */
 
+	// tout devrait être redirigé vers cette fonction.
+	// dans le cas d'entier signés, elle doit aussi remettre le bit de signe en bit de poids faible
+	// et représenter le tout comme un entier non signé borné
 	template<typename _C> inline auto
 	bounded_value_enc(const _C& c , size_t i , CValue Min , CValue Max) -> BoundedValue<CValue> 
 	{
