@@ -1,5 +1,5 @@
-#ifndef __pvcompressionplugin_vtkugridtetrawrapper_h
-#define __pvcompressionplugin_vtkugridtetrawrapper_h
+#ifndef __onika_vtk_ugridtetrawrapper_h
+#define __onika_vtk_ugridtetrawrapper_h
 
 #include <type_traits>
 
