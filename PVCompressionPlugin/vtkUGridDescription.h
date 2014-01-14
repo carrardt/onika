@@ -7,7 +7,7 @@
 #include <vtkCellArray.h>
 #include <vtkPointData.h>
 
-#include "ugriddesc.h"
+#include "onika/vtk/ugriddesc.h"
 
 namespace onika { namespace vtk {
 

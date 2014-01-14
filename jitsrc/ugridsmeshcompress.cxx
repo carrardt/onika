@@ -8,9 +8,8 @@
 #include "onika/codec/asciistream.h"
 #include "onika/compress/edgecompress.h"
 #include "onika/sysio.h"
-
-#include "ugriddesc.h"
-#include "vtkugridtetrawrapper.h"
+#include "onika/vtk/ugriddesc.h"
+#include "onika/vtk/ugridtetrawrapper.h"
 
 using namespace onika::vtk;
 using onika::mesh::edge_length_op;

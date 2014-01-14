@@ -6,7 +6,7 @@
 #include <vtkPoints.h>
 #include <assert.h>
 
-#include "ugriddesc.h"
+#include "vtkUGridDescription.h"
 
 namespace onika { namespace vtk {
 

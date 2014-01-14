@@ -1,4 +1,3 @@
-#include "vtkugridtetrawrapper.h"
 #include "onika/mesh/cell2vertex.h"
 #include "onika/mesh/cell2edge.h"
 #include "onika/mesh/simplicialmesh.h"
@@ -14,6 +13,7 @@
 #include <vtkDataArrayTemplate.h>
 
 #include "vtkUGridDescription.h"
+#include "onika/vtk/ugridtetrawrapper.h"
 
 using std::cout;
 using namespace onika::vtk;

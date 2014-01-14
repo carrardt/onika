@@ -10,7 +10,7 @@
 
 using namespace onika::vtk;
 
-#ifndef UGRID_SMESH_COMPRESS_JIT
+#ifndef ugridsmeshcompress_PATH
 #error No path to JIT source file
 #endif
 
@@ -18,7 +18,7 @@ static std::map< std::string , jitti::Module* > g_modules;
 
 bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname)
 {
-	std::cout<<"jit file = "<<UGRID_SMESH_COMPRESS_JIT<<"\n";
+	std::cout<<"jit file = "<<ugridsmeshcompress_PATH<<"\n";
 
 	if( data == 0 ) return false;
 //	std::cout<<"OutputDataObject:\n";
@@ -47,7 +47,7 @@ bool vtkUGridSMeshCompress(vtkDataObject* data, int nedges, const char* outfname
 	{
 		std::string opt("-DUGRID_DESC=" + sig);
 		std::cout<<"compiling module ("<<sig<<")\n";
-		m = jitti::Compiler::createModuleFromFile(UGRID_SMESH_COMPRESS_JIT,opt.c_str());
+		m = jitti::Compiler::createModuleFromFile(ugridsmeshcompress_PATH,opt.c_str());
 		auto module_init = m->getFunction("initialize");
 		std::cout<<"initializing module ...\n";
 		module_init();
