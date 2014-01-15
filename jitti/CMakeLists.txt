@@ -114,7 +114,7 @@ target_link_libraries(jitti
 	LLVMSupport
 	rt
 	dl
-	tinfo
+#	tinfo
 	pthread
 	z
 )
