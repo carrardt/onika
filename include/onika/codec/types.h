@@ -2,20 +2,9 @@
 #define __onika_codec_types_h
 
 #include "onika/debug/dbgassert.h"
-#include "onika/debug/dbgmessage.h"
-#include "onika/mathfunc.h"
+#include "onika/language.h"
 
 namespace onika { namespace codec {
-
-	// Here, list means iterator based interval in a sequence/container
-	template<typename Iterator>
-	struct List
-	{
-		inline List(const Iterator& _f, const Iterator& _l) : f(_f), l(_l) {}
-		Iterator f,l;
-	};
-	template<typename Iterator>
-	inline List<Iterator> list(Iterator f,Iterator l) { return List<Iterator>(f,l); }
 
 
 	/* 1) Both sets MUST be sorted, in the purpose of disambiguous reading.
@@ -25,66 +14,62 @@ namespace onika { namespace codec {
 	template<typename Iterator1, typename Iterator2>
 	struct Subset
 	{
-		inline Subset(Iterator1 _sf, Iterator1 _sl, Iterator2 _ssf, Iterator2 _ssl)
-			: list1(_sf,_sl), list2(_ssf,_ssl) {}
-		inline Subset(Iterator1 _sf, Iterator1 _sl, Iterator2 _ssf)
-			: list1(_sf,_sl) {}
-		List<Iterator1> list1;
-		List<Iterator2> list2;
+		inline Subset(Iterator1 _rsf, Iterator1 _rsl, Iterator2 _ssf, Iterator2 _ssl=_ssf)
+			: rsf(_rsf), rsl(_rsl), ssf(_ssf), ssl(_ssl) {}
+		Iterator1 rsf,rsl;
+		Iterator2 ssf,ssl;
 	};
 	template<typename Iterator1, typename Iterator2>
-	inline Subset<Iterator1,Iterator2> subset(Iterator1 _sf, Iterator1 _sl, Iterator2 _ssf, Iterator2 _ssl)
-	{ return Subset<Iterator1,Iterator2>(_sf,_sl,_ssf,_ssl); }
-	template<typename Iterator1, typename Iterator2>
-	inline Subset<Iterator1,Iterator2> subset(Iterator1 _sf, Iterator1 _sl, Iterator2 _ssf)
-	{ return Subset<Iterator1,Iterator2>(_sf,_sl,_ssf,_ssf); }
+	inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf, Iterator2 ssl=ssf)
+	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(_sf,_sl,_ssf,_ssl) )
 
 	// x must be in the range [min,max] (inclusive)
 	template<typename T>
 	struct BoundedValue
 	{
-		inline BoundedValue() {}
-		inline BoundedValue(const BoundedValue& bv) : x(bv.x), min(bv.min), max(bv.max) {}
-		inline BoundedValue& operator = (const BoundedValue& bv) { x=bv.x; min=bv.min; max=bv.max; }
-		inline BoundedValue(const T& _min, const T& _max) : min(_min), max(_max)
+		inline BoundedValue(const T& l, const T& h, const T& v=l) : low(l), high(h), x(v)
 		{
-			debug::dbgassert(min<=max);
+			debug::dbgassert(low<=high);
 		}
-		inline BoundedValue(const T& _x, const T& _min, const T& _max) : x(_x), min(_min), max(_max)
-		{
-			debug::dbgassert(x>=min && x<=max);
-		}
-		T x,min,max;
+		T low,high,x;
 	};
 	template<typename T>
-	inline BoundedValue<T> bounded_value(const T& _x, const T& _min, const T& _max){ return BoundedValue<T>(_x,_min,_max); }
-	template<typename T>
-	inline BoundedValue<T> bounded_value(const T& _min, const T& _max){ return BoundedValue<T>(_min,_max); }
+	inline auto bounded_value(const T& l, const T& h,const T& v=l)
+	ONIKA_AUTO_RET( return BoundedValue<T>(l,h,v) )
 
-	template<typename Iterator>
-	struct BoundedIntegerSet
+	// unordered set of integers in the range [0,maxvalue]
+	template<class Iterator>
+	struct UUISet
 	{
-		inline BoundedIntegerSet(int64_t _min, int64_t _max,int64_t _n) : min(_min), max(_max),n(_n) {}
-		inline BoundedIntegerSet(int64_t _min, int64_t _max,Iterator _f,Iterator _l)
-		: min(_min),max(_max),list(_f,_l),n(-1) {}
-		int64_t min,max,n;
-		List<Iterator> list;
+		inline UUISet(Iterator f, Iterator l, uint64_t m)
+		: first(f), nvalues(std::distance(f,l)), maxvalue(m) {}
+		inline UUISet(Iterator f,uint64_t n,uint64_t m)
+		: first(f), nvalues(n), maxvalue(m) {}
+		Iterator first;
+		uint64_t nvalues;
+		uint64_t maxvalue;
 	};
-	template<typename Iterator>
-	inline BoundedIntegerSet<Iterator> bounded_integer_set(int64_t _min, int64_t _max, Iterator first, Iterator last)
-	{ return BoundedIntegerSet<Iterator>(_min,_max,first,last); }
+	template<class Iterator>
+	static inline auto uuiset(Iterator f,Iterator l,uint64_t m)
+	ONIKA_AUTO_RET( UUISet<Iterator>(f,l,m) )
 
-	template<typename T, typename T2>
-	inline BoundedValue<T2>
-	bounded_delta(const T& avg, const T2& delta, const T& low, const T& high)
+	template<class Iterator>
+	static inline auto uuiset(Iterator f,uint64_t n,uint64_t m)
+	ONIKA_AUTO_RET( UUISet<Iterator>(f,n,m) )
+
+	// unordered unique integer pair in the range[0,maxvalue]
+	struct UUIPair
 	{
-		debug::dbgassert( tuple::all_less_or_equal(low,avg) );
-		debug::dbgassert( tuple::all_less_or_equal(avg,high) );
-		T2 dlow = onika::math::sub( low , avg );
-		T2 dhigh = onika::math::sub( high , avg );
-		return BoundedValue<T2>( delta, dlow, dhigh );
-	}
-
+		inline UUIPair(uint64_t _i1,uint64_t _i2,uint64_t m)
+		: i1(_i1), i2(_i2), maxvalue(m) {}
+		inline UUIPair(uint64_t m)
+		: i1(0), i2(0), maxvalue(m) {}
+		uint64_t i1,i2,maxvalue;
+	};
+	static inline auto uuipair(uint64_t i,uint64_t j,uint64_t m)
+	ONIKA_AUTO_RET( UUISet<Iterator>(i,j,m) )
+	static inline auto uuipair(uint64_t m)
+	ONIKA_AUTO_RET( UUISet<Iterator>(m) )
 } } // end of namespace
 
 #endif // __onika_codec_types_h
