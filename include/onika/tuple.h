@@ -273,6 +273,18 @@ namespace onika { namespace tuple {
 	template< int N, class T> inline auto repeat(const T& x)
 	ONIKA_AUTO_RET( repeat(x,make_indices<N>()) )
 
+	// ============= reduce ================
+	template<class T, class Func, int I0>
+	auto reduce( const T& x, Func f, indices<I0> ignored )
+	ONIKA_AUTO_RET( std::get<I0>(x) )
+
+	template<class T, class Func, int I0, int... I>
+	auto reduce( const T& x, Func f, indices<I0,I...> ignored )
+	ONIKA_AUTO_RET( f( std::get<I0>(x) , reduce(x,f,indices<I...>()) ) )
+
+	template<class Func, class... Types>
+	auto reduce( const std::tuple<Types...>& x, Func f )
+	ONIKA_AUTO_RET( reduce(x,f,make_indices<sizeof...(Types)>() ) )
 
 	// ========================================
 	// =============== print ==================
