@@ -3,6 +3,7 @@
 
 #include <iterator>
 #include "onika/container/iterator.h"
+#include "onika/container/algorithm.h"
 #include "onika/language.h"
 #include "onika/tuple.h"
 
@@ -198,14 +199,65 @@ inline auto zip_vectors_cpy( const Types&... t ) -> TupleVecCpy< Types... >
 }
 
 
+// ==========================================================
+// ==== algorithm specialization                          ===
+// ==========================================================
+
+// min value
+template<class Types...>
+inline auto min_value(const TupleVecCpy<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, MinValueOp() ) ) 
+template<class Types...>
+inline auto min_value(const TupleVec<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, MinValueOp() ) ) 
+
+// max value
+template<class Types...>
+inline auto max_value(const TupleVecCpy<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, MaxValueOp() ) ) 
+template<class Types...>
+inline auto max_value(const TupleVec<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, MaxValueOp() ) ) 
+
+// single element value encoding
+template<class Types...>
+inline auto value_enc(const TupleVecCpy<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, ValueEncOp() ) ) 
+template<class Types...>
+inline auto value_enc(const TupleVec<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, ValueEncOp() ) ) 
+
+// element pair difference encoding
+template<class Types...>
+inline auto delta_enc(const TupleVecCpy<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, DeltaEncOp() ) ) 
+template<class Types...>
+inline auto delta_enc(const TupleVec<Types...>& c) 
+ONIKA_AUTO_RET( onika::tuple::map( c.m_vecTuple, DeltaEncOp() ) ) 
+
+// total size of container
+template<class Types...>
+inline auto memory_bytes(const TupleVecCpy<Types...>& c) 
+ONIKA_AUTO_RET(
+	onika::tuple::reduce( 
+		onika::tuple::map(c.m_vecTuple,MemoryBytesOp()),
+		onika::math::add_op()
+		)
+	)
+
+template<class Types...>
+inline auto memory_bytes(const TupleVec<Types...>& c) 
+ONIKA_AUTO_RET( sizeof(c) + /* add reference vector to total size */
+	onika::tuple::reduce( 
+		onika::tuple::map(c.m_vecTuple,MemoryBytesOp()),
+		onika::math::add_op()
+		)
+	)
+
 } } // end of namespace onika::container
 
 
 
-
-// ==========================================================
-// ======================== UNIT TEST =======================
-// ==========================================================
 #endif // end of file tuplevec.h
 
 
