@@ -223,6 +223,31 @@ namespace onika { namespace math {
 #undef TG
 #undef TS
 
+// define operators applicable with () operator
+#define MATH_FUNC1(name) \
+struct name##_op { \
+template<class T> inline auto operator () (const T& x) const \
+ONIKA_AUTO_RET( C##name##X<T>::name##X(x) ) };
+		MATH_FUNC1(negate)
+		MATH_FUNC1(inverse)
+		MATH_FUNC1(abs)
+		MATH_FUNC1(norm)
+		MATH_FUNC1(norm2)
+#undef 	MATH_FUNC1
+#define MATH_FUNC2(name) \
+struct name##_op { \
+template <class T1, class T2> \
+inline auto operator () (const T1& x,const T2& y) const \
+ONIKA_AUTO_RET( C##name##XX<T1,T2>::name##XX(x,y) ) };
+		MATH_FUNC2(sub)
+		MATH_FUNC2(add)
+		MATH_FUNC2(mul)
+		MATH_FUNC2(div)
+		MATH_FUNC2(dot)
+		MATH_FUNC2(distance)
+		MATH_FUNC2(distance2)
+#undef 	MATH_FUNC2
+	
 } }
 
 #define ONIKA_USE_MATH \
