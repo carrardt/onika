@@ -13,11 +13,6 @@ struct OutputTokenStream
 	inline OutputTokenStream(BitStreamT& bs, DebugStreamT& ds) : bitstream(bs), debugstream(ds) {}
 
 
-
-
-	
-
-
 	BitStreamT& bitstream;
 	DebugStreamT& debugstream;
 };
