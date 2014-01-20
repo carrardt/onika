@@ -57,17 +57,13 @@ int main()
 	cout<<"Testing edge encoding ...\n";
 	for(int x=0;x<1000;x++)
 	{
-		int a,b;
-		onika::codec::edge_dec(x,a,b);
-		//cout<<x<<" -> "<<a<<","<<b<<endl;
-		int y = onika::codec::edge_enc(a,b);
+		uint64_t y = onika::codec::uuipair_enc( onika::codec::uuipair_dec(x) );
 		onika::debug::dbgassert(y==x);
 	}
 	for(int i=0;i<1000;i++)
 	{
-		uint64_t y,a=0,b=0,x=randN(31);
-		onika::codec::edge_dec(x,a,b);
-		y = onika::codec::edge_enc(a,b);
+		uint64_t y,x=randN(31);
+		y = onika::codec::uuipair_enc( onika::codec::uuipair_dec(x) );
 		//cout<<x<<" -> "<<a<<","<<b<<" -> "<<y<<endl;
 		onika::debug::dbgassert(y==x);		
 	}

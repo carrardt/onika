@@ -134,19 +134,6 @@ namespace onika { namespace codec {
 			return (*this) >> v.first >> v.second;
 		}
 
-		template<typename Iterator>
-		inline InputBitStream& operator >> ( List<Iterator>& l )
-		{
-			for(Iterator i=l.f;i!=l.l;++i) { (*this)>>(*i); }
-			return *this;
-		}
-
-		template<typename T>
-		inline InputBitStream& operator >> ( std::vector<T>& l )
-		{
-			return (*this) >> List< typename std::vector<T>::iterator >(l.begin(),l.end());
-		}
-
 		template<typename T>
 		inline InputBitStream& operator >> ( BoundedValue<T>& i)
 		{
@@ -187,7 +174,7 @@ namespace onika { namespace codec {
 		inline InputBitStream& operator >> ( BoundedValue<double>& i){ return (*this)>>i.x; }
 
 		template<typename Iterator>
-		inline InputBitStream& operator >> ( BoundedIntegerSet<Iterator>& s)
+		inline InputBitStream& operator >> ( UUISet<Iterator>& s)
 		{
 			int nvalues = std::distance( s.list.f , s.list.l );
 			uint64_t Min = 0;
@@ -205,12 +192,12 @@ namespace onika { namespace codec {
 		template<typename Iterator1,typename Iterator2>
 		inline InputBitStream& operator >> ( Subset<Iterator1,Iterator2>& s)
 		{
-			s.list2.l = s.list2.f;
-			for(Iterator1 it=s.list1.f; it!=s.list1.l; ++it)
+			s.ssl = s.ssf;
+			for(Iterator1 it=s.rsf; it!=s.rsl; ++it)
 			{
 				if( readBits(1) )
 				{
-					*s.list2.l++ = *it;
+					*s.ssl++ = *it;
 				}
 			}
 			return (*this);

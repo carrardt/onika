@@ -54,10 +54,10 @@ ONIKA_AUTO_RET(
 
 struct DeltaEncOp
 {
-	size_t i;
-	inline DeltaEncOp(size_t _i) : i(_i) { }
+	size_t i,j;
+	inline DeltaEncOp(size_t _i, size_t _j) : i(_i), j(_j) { }
 	template<class C> inline auto operator () (const C& c) const
-	ONIKA_AUTO_RET( onika::container::delta_enc(c,i) )
+	ONIKA_AUTO_RET( onika::container::delta_enc(c,i,j) )
 };
 
 template<typename _C>

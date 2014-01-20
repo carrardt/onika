@@ -8,6 +8,14 @@ struct AddOne
 	ONIKA_AUTO_RET( x+1 )
 };
 
+struct AddOp
+{
+	template<class T, class T2>
+	inline auto operator () ( const T& x, const T2& y) const
+	ONIKA_AUTO_RET( x+y )
+};
+
+
 ONIKA_USE_TUPLE_OSTREAM
 
 struct print_tuple_index
@@ -27,13 +35,15 @@ int main()
 	int w[10] = {0,1,2,3,4,5,6,7,8,9};
 
 	auto num = std::make_tuple(3,5,0.2);
-	std::cout<<"is_arithmetic( (3,5,0.2) ) = "<< std::is_arithmetic< decltype(num) >::value <<"\n";
+	std::cout<<"is_arithmetic( "<<num<<" ) = "<< std::is_arithmetic< decltype(num) >::value <<"\n";
 	auto alnum = std::make_tuple(3,"AA");
-	std::cout<<"is_arithmetic( (3,'AA') ) = "<< std::is_arithmetic< decltype(alnum) >::value <<"\n";
+	std::cout<<"is_arithmetic( "<<alnum<<" ) = "<< std::is_arithmetic< decltype(alnum) >::value <<"\n";
 
-	std::cout<< num <<"\n";
+	std::cout<<"tuple with index: ";
 	onika::tuple::sapply_indexed(num,print_tuple_index());
 	std::cout<<"\n";
+
+	std::cout<<"reduce( "<<num<<", add ) = "<< onika::tuple::reduce(num,AddOp()) <<"\n";
 
 	//std::cout<<"norm(3.5)="<<onika::math::norm(3.5)<<"\n";
 	//std::cout<<"norm((3,4))="<<onika::math::norm(std::make_tuple(3,4))<<"\n";

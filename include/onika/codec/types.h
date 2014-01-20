@@ -14,28 +14,28 @@ namespace onika { namespace codec {
 	template<typename Iterator1, typename Iterator2>
 	struct Subset
 	{
-		inline Subset(Iterator1 _rsf, Iterator1 _rsl, Iterator2 _ssf, Iterator2 _ssl=_ssf)
+		inline Subset(Iterator1 _rsf, Iterator1 _rsl, Iterator2 _ssf, Iterator2 _ssl)
 			: rsf(_rsf), rsl(_rsl), ssf(_ssf), ssl(_ssl) {}
 		Iterator1 rsf,rsl;
 		Iterator2 ssf,ssl;
 	};
 	template<typename Iterator1, typename Iterator2>
-	inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf, Iterator2 ssl=ssf)
-	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(_sf,_sl,_ssf,_ssl) )
+	static inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf, Iterator2 ssl)
+	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(rsf,rsl,ssf,ssl) )
 
 	// x must be in the range [min,max] (inclusive)
 	template<typename T>
 	struct BoundedValue
 	{
-		inline BoundedValue(const T& l, const T& h, const T& v=l) : low(l), high(h), x(v)
+		inline BoundedValue(const T& l, const T& h, const T& v) : low(l), high(h), x(v)
 		{
 			debug::dbgassert(low<=high);
 		}
 		T low,high,x;
 	};
 	template<typename T>
-	inline auto bounded_value(const T& l, const T& h,const T& v=l)
-	ONIKA_AUTO_RET( return BoundedValue<T>(l,h,v) )
+	static inline auto bounded_value(const T& l, const T& h,const T& v)
+	ONIKA_AUTO_RET( BoundedValue<T>(l,h,v) )
 
 	// unordered set of integers in the range [0,maxvalue]
 	template<class Iterator>
@@ -67,9 +67,9 @@ namespace onika { namespace codec {
 		uint64_t i1,i2,maxvalue;
 	};
 	static inline auto uuipair(uint64_t i,uint64_t j,uint64_t m)
-	ONIKA_AUTO_RET( UUISet<Iterator>(i,j,m) )
+	ONIKA_AUTO_RET( UUIPair(i,j,m) )
 	static inline auto uuipair(uint64_t m)
-	ONIKA_AUTO_RET( UUISet<Iterator>(m) )
+	ONIKA_AUTO_RET( UUIPair(m) )
 } } // end of namespace
 
 #endif // __onika_codec_types_h

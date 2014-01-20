@@ -43,7 +43,7 @@ namespace onika { namespace codec {
 	uuipair_dec(uint64_t x)
 	{
 		uint64_t a,b;
-		ValueType bmin=1, bmax=1; 
+		uint64_t bmin=1, bmax=1;
 		while( ROWINDEX(bmax) <= x )
 		{
 			bmin = bmax;
@@ -51,7 +51,7 @@ namespace onika { namespace codec {
 		}
 		while( bmin<(bmax-1) )
 		{
-			ValueType pivot = (bmax+bmin)/2;
+			uint64_t pivot = (bmax+bmin)/2;
 			if( ROWINDEX(pivot) > x ) bmax=pivot;
 			else bmin=pivot;
 		}
@@ -61,8 +61,8 @@ namespace onika { namespace codec {
 	}
 #undef ROWINDEX
 
-	inline auto bounded_uuipair_enc(int64_t low, int64_t high,int64_t a, int64_t b)
-	ONIKA_AUTO_RET( bounded_value(uuipair_enc(a-low,b-low),uuipair_bound(high-low) ) )
+	inline auto bounded_uuipair_enc(uint64_t low, uint64_t high,uint64_t a, uint64_t b)
+	ONIKA_AUTO_RET( bounded_value(0ul, uuipair_bound(high-low), uuipair_enc(a-low,b-low) ) )
 
 	
 } } // namespace onika::codec
