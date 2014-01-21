@@ -106,58 +106,37 @@ namespace onika { namespace codec {
 		template<typename DataType>
 		inline InputBitStream& operator >> (DataType& x)
 		{
+			// FIXME: iterate to handle cases where DataType is bigger than Word
 			Word w;
 			readBits(w,sizeof(DataType)*8);
 			x = static_cast<DataType>(w);
 			return *this;
 		}
 
-		inline InputBitStream& operator >> (std::string& s)
-		{
-			unsigned int n = 0;
-			auto token = bounded_value(0u,n,static_cast<unsigned int>(MAX_STRING_LEN));
-			(*this) >> token;
-			n = token.x;
-			s.resize(n,' ');
-			for(unsigned int i=0;i<n;i++)
-			{
-				unsigned char c='\0';
-				(*this) >> c;
-				s[i] = c;
-			}
-			return *this;
-		}		
-
-		template<typename T1, typename T2>
-		inline InputBitStream& operator >> ( std::pair<T1,T2>& v )
-		{
-			return (*this) >> v.first >> v.second;
-		}
-
 		template<typename T>
 		inline InputBitStream& operator >> ( BoundedValue<T>& i)
 		{
-			debug::dbgassert(i.max >= i.min);
-			if( i.max > i.min )
+			debug::dbgassert(i.high >= i.low);
+			if( i.high > i.low )
 			{
-				uint64_t range = i.max - i.min + 1;
+				uint64_t range = i.high - i.low + 1;
 				int nbits = nextpo2log(range);
-				i.x = i.min + readBits( nbits );
+				i.x = i.low + readBits( nbits );
 			}
-			else { i.x = 0; }
+			else { i.x = i.low; }
 			return (*this);
 		}
 
 #define BOUNDED_VALUE_INTEGER_SPECIALIZATION(T) \
 		inline InputBitStream& operator >> ( BoundedValue<T>& i) \
 		{ \
-			debug::dbgassert(i.max >= i.min); \
-			if( i.max > i.min ) \
+			debug::dbgassert(i.high >= i.low); \
+			if( i.high > i.low ) \
 			{ \
-				uint64_t range = i.max - i.min + 1; \
+				uint64_t range = i.high - i.low + 1; \
 				int nbits = nextpo2log(range); \
-				i.x = i.min + readBits( nbits ); \
-			} else { i.x = 0; } \
+				i.x = i.low + readBits( nbits ); \
+			} else { i.x = i.low; } \
 			return (*this); \
 		}
 		BOUNDED_VALUE_INTEGER_SPECIALIZATION(int8_t)
@@ -173,15 +152,15 @@ namespace onika { namespace codec {
 		inline InputBitStream& operator >> ( BoundedValue<float>& i){ return (*this)>>i.x; }
 		inline InputBitStream& operator >> ( BoundedValue<double>& i){ return (*this)>>i.x; }
 
-		template<typename Iterator>
-		inline InputBitStream& operator >> ( UUISet<Iterator>& s)
+		inline InputBitStream& operator >> ( UUIPair& p )
 		{
-			int nvalues = std::distance( s.list.f , s.list.l );
-			uint64_t Min = 0;
-			uint64_t Max = uint_set_enc_bound(nvalues,s.max-s.min);			
-			auto token = bounded_value( Min, Max );
+			uint64_t l = 0;
+			uint64_t h = uuipair_bound( p.maxvalue );			
+			auto token = bounded_value( l, h, l );
 			*(this) >> token;
-			uint_set_dec( token.x , nvalues, s.list.f );
+			auto r = uuipair_dec( token.x );
+			p.i = r.first;
+			p.j = r.second;
 			return *this;
 		}
 

@@ -1,9 +1,33 @@
 #include "onika/codec/inputbitstream.h"
 
-#include "onika/codec/asciistream.h"
-
 #include <iostream>
 #include <fstream>
+
+template<class T>
+inline std::ostream& operator << (std::ostream& out, onika::codec::BoundedValue<T>& bv)
+{
+	out << '['<<bv.low<<','<<bv.high<<"]("<<bv.x<<')';
+	return out;
+}
+
+template<typename I1, typename I2>
+inline std::ostream& operator << (std::ostream& out, onika::codec::Subset<I1,I2>& ss)
+{
+	out<<'[';
+	for( I1 it=ss.rsf; it!=ss.rsl; ++it )
+	{
+		if( it!=ss.rsf ) out<<',';
+		out<<(*it);
+	}
+	out<<"](";
+	for( I2 it=ss.ssf; it!=ss.ssl; ++it )
+	{
+		if( it!=ss.ssf ) out<<',';
+		out<<(*it);
+	}
+	out<<')';
+	return out;
+}
 
 int main(int argc, char* argv[])
 {
@@ -23,7 +47,6 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	onika::codec::AsciiStream out(std::cout);
 	onika::codec::InputBitStream<std::ifstream,std::ostream> in(ifile,std::cout);
 
 	bool endOfTest = false;
@@ -48,7 +71,7 @@ int main(int argc, char* argv[])
 			int max=0; std::cin>>max;
 			auto bv = onika::codec::bounded_value(min,max);
 			in >> bv;
-			out << bv;
+			std::cout << bv << "\n";
 		}
 		else if( token == "s" )
 		{
@@ -66,7 +89,7 @@ int main(int argc, char* argv[])
 			std::vector<int> result(refSet.size());
 			auto subset = onika::codec::subset( refSet.begin(), refSet.end(), result.begin() );
 			in >> subset;
-			out << subset;
+			std::cout << subset;
 		}
 		else { endOfTest = true; }
 	}

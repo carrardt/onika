@@ -7,8 +7,8 @@
 namespace onika { namespace codec {
 
 
-	/* 1) Both sets MUST be sorted, in the purpose of disambiguous reading.
-	 * 2) Iterator2 may be an insert iterator for reading pruposes.
+	/* 1) Both sets MUST be sorted to ensure unambiguous reading.
+	 * 2) Iterator2 may be an insert iterator for reading purposes.
 	 * 2bis) or a normal iterator in a container with enough space left to store elements
 	 */	 	 
 	template<typename Iterator1, typename Iterator2>
@@ -23,6 +23,10 @@ namespace onika { namespace codec {
 	static inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf, Iterator2 ssl)
 	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(rsf,rsl,ssf,ssl) )
 
+	template<typename Iterator1, typename Iterator2>
+	static inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf)
+	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(rsf,rsl,ssf,ssf) )
+
 	// x must be in the range [min,max] (inclusive)
 	template<typename T>
 	struct BoundedValue
@@ -36,6 +40,9 @@ namespace onika { namespace codec {
 	template<typename T>
 	static inline auto bounded_value(const T& l, const T& h,const T& v)
 	ONIKA_AUTO_RET( BoundedValue<T>(l,h,v) )
+	template<typename T>
+	static inline auto bounded_value(const T& l, const T& h)
+	ONIKA_AUTO_RET( BoundedValue<T>(l,h,l) )
 
 	// unordered set of integers in the range [0,maxvalue]
 	template<class Iterator>
@@ -60,17 +67,18 @@ namespace onika { namespace codec {
 	// unordered unique integer pair in the range[0,maxvalue]
 	struct UUIPair
 	{
-		inline UUIPair(uint64_t _i1,uint64_t _i2,uint64_t m)
-		: i1(_i1), i2(_i2), maxvalue(m) {}
+		inline UUIPair(uint64_t _i,uint64_t _j,uint64_t m)
+		: i(_i), j(_j), maxvalue(m) {}
 		inline UUIPair(uint64_t m)
-		: i1(0), i2(0), maxvalue(m) {}
-		uint64_t i1,i2,maxvalue;
+		: i(0), j(0), maxvalue(m) {}
+		uint64_t i,j,maxvalue;
 	};
 	static inline auto uuipair(uint64_t i,uint64_t j,uint64_t m)
 	ONIKA_AUTO_RET( UUIPair(i,j,m) )
 	static inline auto uuipair(uint64_t m)
 	ONIKA_AUTO_RET( UUIPair(m) )
 } } // end of namespace
+
 
 #endif // __onika_codec_types_h
 
