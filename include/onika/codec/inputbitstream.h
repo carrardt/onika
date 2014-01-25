@@ -137,27 +137,27 @@ namespace onika { namespace codec {
 		template<typename T>
 		inline InputBitStream& operator >> ( BoundedValue<T>& i)
 		{
-			debug::dbgassert(i.max >= i.min);
-			if( i.max > i.min )
+			debug::dbgassert(i.high >= i.low);
+			if( i.high > i.low )
 			{
-				uint64_t range = i.max - i.min + 1;
+				uint64_t range = i.high - i.low + 1;
 				int nbits = nextpo2log(range);
-				i.x = i.min + readBits( nbits );
+				i.x = i.low + readBits( nbits );
 			}
-			else { i.x = 0; }
+			else { i.x = i.low; }
 			return (*this);
 		}
 
 #define BOUNDED_VALUE_INTEGER_SPECIALIZATION(T) \
 		inline InputBitStream& operator >> ( BoundedValue<T>& i) \
 		{ \
-			debug::dbgassert(i.max >= i.min); \
-			if( i.max > i.min ) \
+			debug::dbgassert(i.high >= i.low); \
+			if( i.high > i.low ) \
 			{ \
-				uint64_t range = i.max - i.min + 1; \
+				uint64_t range = i.high - i.low + 1; \
 				int nbits = nextpo2log(range); \
-				i.x = i.min + readBits( nbits ); \
-			} else { i.x = 0; } \
+				i.x = i.low + readBits( nbits ); \
+			} else { i.x = i.low; } \
 			return (*this); \
 		}
 		BOUNDED_VALUE_INTEGER_SPECIALIZATION(int8_t)
@@ -172,18 +172,6 @@ namespace onika { namespace codec {
 
 		inline InputBitStream& operator >> ( BoundedValue<float>& i){ return (*this)>>i.x; }
 		inline InputBitStream& operator >> ( BoundedValue<double>& i){ return (*this)>>i.x; }
-
-		template<typename Iterator>
-		inline InputBitStream& operator >> ( UUISet<Iterator>& s)
-		{
-			int nvalues = std::distance( s.list.f , s.list.l );
-			uint64_t Min = 0;
-			uint64_t Max = uint_set_enc_bound(nvalues,s.max-s.min);			
-			auto token = bounded_value( Min, Max );
-			*(this) >> token;
-			uint_set_dec( token.x , nvalues, s.list.f );
-			return *this;
-		}
 
 		/*! list2 est le sous-ensemble de list1. le champs de bits est de la taille de list1.
 		 *  un bit 1 indique que cet élément de list1 fait partie du sous-ensemble list2.

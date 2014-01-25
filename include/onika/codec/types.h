@@ -23,6 +23,10 @@ namespace onika { namespace codec {
 	static inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf, Iterator2 ssl)
 	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(rsf,rsl,ssf,ssl) )
 
+	template<typename Iterator1, typename Iterator2>
+	static inline auto subset(Iterator1 rsf, Iterator1 rsl, Iterator2 ssf)
+	ONIKA_AUTO_RET( Subset<Iterator1,Iterator2>(rsf,rsl,ssf,ssf) )
+
 	// x must be in the range [min,max] (inclusive)
 	template<typename T>
 	struct BoundedValue
@@ -36,6 +40,10 @@ namespace onika { namespace codec {
 	template<typename T>
 	static inline auto bounded_value(const T& l, const T& h,const T& v)
 	ONIKA_AUTO_RET( BoundedValue<T>(l,h,v) )
+
+	template<typename T>
+	static inline auto bounded_value(const T& l, const T& h)
+	ONIKA_AUTO_RET( BoundedValue<T>(l,h,l) )
 
 	// unordered set of integers in the range [0,maxvalue]
 	template<class Iterator>
