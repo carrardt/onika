@@ -4,26 +4,26 @@
 #include <fstream>
 
 template<class T>
-inline std::ostream& operator << (std::ostream& out, onika::codec::BoundedValue<T>& bv)
+std::ostream& operator << (std::ostream& out, const onika::codec::BoundedValue<T>& bv)
 {
-	out << '['<<bv.low<<','<<bv.high<<"]("<<bv.x<<')';
+	out<<'['<<bv.low<<','<<bv.high<<"]("<<bv.x<<')';
 	return out;
 }
 
 template<typename I1, typename I2>
-inline std::ostream& operator << (std::ostream& out, onika::codec::Subset<I1,I2>& ss)
+std::ostream& operator << (std::ostream& out, const onika::codec::Subset<I1,I2>& ss)
 {
 	out<<'[';
 	for( I1 it=ss.rsf; it!=ss.rsl; ++it )
 	{
-		if( it!=ss.rsf ) out<<',';
-		out<<(*it);
+		if( it != ss.rsf ) out << ',';
+		out<< (*it);
 	}
 	out<<"](";
 	for( I2 it=ss.ssf; it!=ss.ssl; ++it )
 	{
-		if( it!=ss.ssf ) out<<',';
-		out<<(*it);
+		if( it != ss.ssf ) out << ',';
+		out<< (*it);
 	}
 	out<<')';
 	return out;

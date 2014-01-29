@@ -44,6 +44,10 @@ namespace onika { namespace codec {
 	static inline auto bounded_value(const T& l, const T& h)
 	ONIKA_AUTO_RET( BoundedValue<T>(l,h,l) )
 
+	template<typename T>
+	static inline auto bounded_value(const T& l, const T& h)
+	ONIKA_AUTO_RET( BoundedValue<T>(l,h,l) )
+
 	// unordered set of integers in the range [0,maxvalue]
 	template<class Iterator>
 	struct UUISet
