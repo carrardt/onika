@@ -11,7 +11,6 @@
 #include "onika/mesh/vertex2cell.h"
 #include "onika/mesh/simplicialmesh.h"
 #include "onika/vtk/readvtkascii.h"
-#include "onika/codec/asciistream.h"
 #include "onika/tuple.h"
 
 struct Mesh

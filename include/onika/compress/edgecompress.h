@@ -61,7 +61,7 @@ namespace onika { namespace compress {
 		out << codec::bounded_value( a , static_cast<IdType>(0), static_cast<IdType>(nverts-1) );
 
 		out.debug() << "remove vertex #" << b ;
-		out << codec::value_enc(vertices,b); // could be replaced by delta_enc(vertices,a,b);
+		out << container::value_enc(vertices,b); // could be replaced by delta_enc(vertices,a,b);
 		// encode value(s) attached to removed vertex b
 		// peut etre fait avant l'appel a cette fonction
 
