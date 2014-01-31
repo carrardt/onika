@@ -12,6 +12,7 @@
 #include "onika/mesh/simplicialmesh.h"
 #include "onika/vtk/readvtkascii.h"
 #include "onika/tuple.h"
+#include "onika/codec/outputtokenstream.h"
 
 struct Mesh
 {

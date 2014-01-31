@@ -13,6 +13,13 @@ inline auto dbgmessage() ONIKA_AUTO_RET( onika::sys::dbg() )
 inline codec::NullStream dbgmessage() { return codec::NullStream(); }
 #endif
 
+template<class T>
+struct DebugMessage
+{
+	inline DebugMessage(const T& d) : data(d) {}
+	T data;
+};
+
 } } // namespace
 
 #endif

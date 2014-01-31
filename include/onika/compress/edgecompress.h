@@ -12,6 +12,7 @@ namespace onika { namespace compress {
 	// =================================================================================
         // ============================ smeshEdgeCollapseEncode ============================
         // =================================================================================
+// rename it to tetraMeshEdgeCollapseEncode and specialize it toward tetra to make code simpler
 	template<
 		class CVConnectivy,
 		class VertexContainer,
@@ -95,8 +96,9 @@ namespace onika { namespace compress {
 			{
 				indices[j] = std::find(adjVertices,adjVertices+nAdjVertices,removedCellVertices[ci*(NDim-1)+j]) - adjVertices;
 			}
-			out.debug() << "remove cell #"<<*removedCells_it;
-			out<< codec::bounded_integer_set(0,nAdjVertices,indices,indices+(NDim-1));
+			out.debug() << "remove cell #"<< *removedCells_it << "\n";
+			out<< codec::bounded_uuipair_enc(0,nAdjVertices,indices[0],indices[1]);
+			// out<< codec::bounded_integer_set(0,nAdjVertices,indices,indices+(NDim-1)); // generalized for N dim
 		}
 
 		removedCells_it=removedCells_begin;
